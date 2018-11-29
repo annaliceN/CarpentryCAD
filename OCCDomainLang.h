@@ -24,12 +24,15 @@ class Object {
 	std::string value;
 	std::string kind;
 	MyPrimitive* primitive;
+	std::vector<double> floatList;
 
 public:
 	Object() {};
 	Object(std::string ss) { value = ss; kind = "variable"; pp = NULL; };
 	Object(std::string(*p_)(std::vector<std::string>&)) { pp = p_; kind = "procedure"; value = ""; };
 	Object(MyPrimitive* primitive_) { primitive = primitive_; kind = "primitive"; pp = NULL; }
+	Object(std::vector<double> list_) { floatList = list_; kind = "float list"; pp = NULL; }
+
 	std::string get_kind()
 	{
 		return kind;
@@ -43,6 +46,11 @@ public:
 	MyPrimitive* get_primitive()
 	{
 		return primitive;
+	}
+
+	std::vector<double>& get_list()
+	{
+		return floatList;
 	}
 	
 	std::string apply(std::vector<std::string>&V)

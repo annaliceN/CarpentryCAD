@@ -108,7 +108,7 @@ void OCCWindow::setup_editor()
 	const int tabStop = 4;
 	QFontMetrics metrics(font);
 	editor->setTabStopWidth(tabStop * metrics.width(' '));
-	editor->setPlainText("(cylinder a 10 1)\n(box b1 1 1 10)\n(translate b1 3.5 3.5 -10)\n(box b2 1 1 10)\n(translate b2 3.5 -3.5 -10)\n(box b3 1 1 10)\n(translate b3 -3.5 3.5 -10)\n(box b4 1 1 10)\n(translate b4 -3.5 -3.5 -10)");
+	editor->setPlainText("(cylinder a 10 1)\n(box b1 1 1 10)\n(translate b1 3.5 3.5 -10)\n(box b2 1 1 10)\n(translate b2 3.5 -3.5 -10)\n(box b3 1 1 10)\n(translate b3 -3.5 3.5 -10)\n(box b4 1 1 10)\n(translate b4 -3.5 -3.5 -10)\n(list pgn -14 0 0 -4 0 0 -7 2 0 -6 3 0 -4 3 0 -3 5 0 -3 15 0)\n(blade a b pgn)\n(display a b1 b2 b3 b4)");
 	//highlighter = new Highlighter(editor->document());
 }
 
@@ -192,8 +192,8 @@ void OCCWindow::createToolBars(void)
 	aToolBar->addSeparator();
 	aToolBar->addAction(ui.actionCylinder);
 
-	aToolBar = addToolBar(tr("Help"));
-	aToolBar->addAction(ui.actionAbout);
+// 	aToolBar = addToolBar(tr("Help"));
+// 	aToolBar->addAction(ui.actionAbout);
 }
 
 void OCCWindow::about()
@@ -217,6 +217,7 @@ void OCCWindow::on_action_compile()
 	outputResult("Start compiling...");
 	
 	OCCDomainLang DSL;
+
 	bool isSucces = DSL.compile(sourceCode);
 	
 	if (!isSucces)
@@ -229,6 +230,7 @@ void OCCWindow::on_action_compile()
 
 	vecShapes = convert_to_AIS_shape(*DSL.carpentryPrimitives);
 
+	myOCCOpenGL->getContext()->RemoveAll(true);
 	for (auto& s : vecShapes)
 	{
 		myOCCOpenGL->getContext()->Display(s, Standard_True);

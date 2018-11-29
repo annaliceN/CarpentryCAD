@@ -21,7 +21,7 @@
 #include <TColgp_Array1OfPnt2d.hxx>
 
 #include <BRepLib.hxx>
-
+#include <BRepAlgo_Section.hxx>
 #include <BRepBuilderAPI_MakeVertex.hxx>
 #include <BRepBuilderAPI_MakeEdge.hxx>
 #include <BRepBuilderAPI_MakeWire.hxx>
@@ -51,6 +51,7 @@
 
 #include <GeomTools.hxx>
 #include <Geom_Circle.hxx>
+#include <Geom_Plane.hxx>
 #include <Geom_RectangularTrimmedSurface.hxx>
 
 
@@ -257,6 +258,21 @@ std::string OCCDomainLang::eval(PList &pp, Environment &env)
 		show_err2_flag = false;
 		if (proc == "quote") { return ((proc + " - not yet implemented!")); }
 		else if (proc == "if") { return ((proc + " - not yet implemented!")); }
+		else if (proc == "list")
+		{
+			int nbElements = pp.size() - 2;
+			std::vector<double> floatList;
+			std::string name = pp.get(1).elem(0);
+			for (int i = 0; i < nbElements; ++i)
+			{
+				PList radius = pp.get(i + 2);
+				std::string tmpValue = eval(radius, env);
+				double v = QString(tmpValue.c_str()).toDouble();
+				floatList.push_back(v);
+			}
+			env[name] = Object(floatList);
+			return "";
+		}
 		else if (proc == "cylinder") { 
 			if (pp.size() != 4) return ("ill expression");
 			else
@@ -269,35 +285,7 @@ std::string OCCDomainLang::eval(PList &pp, Environment &env)
 				double R = QString(valueRadius.c_str()).toDouble();
 				double H = QString(valueHeight.c_str()).toDouble();
  				MyPrimitive* creatingPrimitive = make_cylinder(R, H);
-				
-		
-				TColgp_Array1OfPnt array(1, 7); // sizing array    
-				array.SetValue(1, gp_Pnt(-14, 0, 0));
-				array.SetValue(2, gp_Pnt(-4, 0, 0));
-				array.SetValue(3, gp_Pnt(-7, 2, 0));
-				array.SetValue(4, gp_Pnt(-6, 3, 0));
-				array.SetValue(5, gp_Pnt(-4, 3, 0));
-				array.SetValue(6, gp_Pnt(-3, 5, 0));
-				array.SetValue(7, gp_Pnt(-3, 15, 0));
 
-				Handle(Geom_BSplineCurve) aCurve = GeomAPI_PointsToBSpline(array).Curve();
-				Handle(Geom_Surface) S = new Geom_SurfaceOfLinearExtrusion(aCurve, gp_Dir(0, 0, 1));
-				Handle(Geom_Surface) TS = new Geom_RectangularTrimmedSurface(S, -50, 50, false);
-				TopoDS_Face F = BRepBuilderAPI_MakeFace(TS, 1.0);
-				GEOMAlgo_Splitter splitter;
-				splitter.AddArgument(creatingPrimitive->shape);
-				splitter.AddTool(F);
-				splitter.Perform();
-				//creatingPrimitive->shape = splitter.Shape();
-				TopTools_ListIteratorOfListOfShape iter(splitter.Modified(creatingPrimitive->shape));
-
-				for (; iter.More(); iter.Next())
-				{
-					TopoDS_Shape shape = iter.Value();
-
-					carpentryPrimitives->insert(new MyPrimitive(shape));
-					break;
-				}
 				env[name] = Object(creatingPrimitive);
 				return "";
 			}
@@ -319,7 +307,6 @@ std::string OCCDomainLang::eval(PList &pp, Environment &env)
 				double L = QString(valueDepth.c_str()).toDouble();
 				MyPrimitive* creatingPrimitive = make_box(W, H, L);
 				
-				carpentryPrimitives->insert(creatingPrimitive);
 				env[name] = Object(creatingPrimitive);
 
 				return "";
@@ -343,21 +330,123 @@ std::string OCCDomainLang::eval(PList &pp, Environment &env)
 			}	
 			return "";
 		}
-		else if (proc == "translate")
+		else if (proc == "showlist")
 		{
-			if (pp.size() != 5) return ("ill expression");
+			if (pp.size() != 2) return ("ill expression");
 			std::string name = pp.get(1).elem(0);
 			if (env.find(name) != env.end())
 			{
-				auto pmt = env[name].get_primitive();
-				PList x = pp.get(2);
-				PList y = pp.get(3);
-				PList z = pp.get(4);
-				double valueX = QString::fromStdString(eval(x, env)).toDouble();
-				double valueY = QString::fromStdString(eval(y, env)).toDouble();
-				double valueZ = QString::fromStdString(eval(z, env)).toDouble();
-				translate_prmt(pmt, valueX, valueY, valueZ);
-				//pmt->SetTranslation(Vector3D(valueX, valueY, valueZ));
+				auto& floatList = env[name].get_list();
+				for (auto& v : floatList)
+				{
+					std::cout << v << std::endl;
+				}
+			}
+			return "";
+		}
+		else if (proc == "blade") {
+			if (pp.size() != 4) return ("ill expression");
+			std::string namePmt = pp.get(1).elem(0);
+			std::string nameNew = pp.get(2).elem(0);
+			std::string nameList = pp.get(3).elem(0);
+
+			if (env.find(namePmt) != env.end() &&
+				env.find(nameList) != env.end())
+			{
+				auto pmt = env[namePmt].get_primitive();
+				auto lst = env[nameList].get_list();
+
+				const int nbValInList = lst.size();
+				std::cout << nbValInList << std::endl;
+				if (nbValInList % 3 != 0) return "";
+				const int nbPnts = nbValInList / 3;
+
+				TColgp_Array1OfPnt array(1, nbPnts);
+				for (auto i = 0; i < nbPnts; ++i)
+				{
+					array.SetValue(i + 1, gp_Pnt(lst[3 * i], lst[3 * i + 1], lst[3 * i + 2]));
+				}
+
+				Handle(Geom_BSplineCurve) aCurve = GeomAPI_PointsToBSpline(array).Curve();
+				Handle(Geom_Surface) S = new Geom_SurfaceOfLinearExtrusion(aCurve, gp_Dir(0, 0, 1));
+				Handle(Geom_Surface) TS = new Geom_RectangularTrimmedSurface(S, -50, 50, false);
+				TopoDS_Face F = BRepBuilderAPI_MakeFace(TS, 1.0);
+				GEOMAlgo_Splitter splitter;
+				splitter.AddArgument(pmt->shape);
+				splitter.AddTool(F);
+				splitter.Perform();
+				//creatingPrimitive->shape = splitter.Shape();
+				TopTools_ListIteratorOfListOfShape iter(splitter.Modified(pmt->shape));
+
+				MyPrimitive* candPmt[2];
+				for (int cnt = 0; iter.More() && cnt < 2; iter.Next(), ++cnt)
+				{
+					TopoDS_Shape shape = iter.Value();
+
+					candPmt[cnt] = new MyPrimitive(shape);
+					std::cout << "comp " << cnt << std::endl;
+				}
+
+				env[namePmt] = Object(candPmt[0]);
+				env[nameNew] = Object(candPmt[1]);
+
+				return "";
+			}
+		}
+		else if (proc == "chop") {
+			if (pp.size() != 4) return ("ill expression");
+			std::string namePmt = pp.get(1).elem(0);
+			std::string nameNew = pp.get(2).elem(0);
+			std::string nameList = pp.get(3).elem(0);
+
+			if (env.find(namePmt) != env.end() &&
+				env.find(nameList) != env.end())
+			{
+				auto pmt = env[namePmt].get_primitive();
+				auto lst = env[nameList].get_list();
+
+				const int nbValInList = lst.size();
+				std::cout << nbValInList << std::endl;
+				if (nbValInList % 3 != 0) return "";
+
+				gp_Pnt P(lst[0], lst[1], lst[2]);
+				gp_Dir D(lst[3], lst[4], lst[5]);
+				gp_Pln Plan(P, D);
+				TopoDS_Face F = BRepBuilderAPI_MakeFace(Plan);
+				//TopoDS_Shape F = BRepAlgo_Section(pmt->shape, maLame);
+
+				GEOMAlgo_Splitter splitter;
+				splitter.AddArgument(pmt->shape);
+				splitter.AddTool(F);
+				splitter.Perform();
+				TopTools_ListIteratorOfListOfShape iter(splitter.Modified(pmt->shape));
+
+				MyPrimitive* candPmt[2];
+				for (int cnt = 0; iter.More() && cnt < 2; iter.Next(), ++cnt)
+				{
+					TopoDS_Shape shape = iter.Value();
+
+					candPmt[cnt]  = new MyPrimitive(shape);
+					std::cout << "comp " << cnt << std::endl;
+				}
+
+				env[namePmt] = Object(candPmt[0]);
+				env[nameNew] = Object(candPmt[1]);
+
+				return "";
+			}
+		}
+		else if (proc == "display") {
+			int nbElements = pp.size() - 1;
+			std::cout << nbElements << std::endl;
+			carpentryPrimitives->clear();
+			std::string name = pp.get(1).elem(0);
+			for (int i = 0; i < nbElements; ++i)
+			{
+				std::string namePmt = pp.get(i + 1).elem(0);
+				std::cout << namePmt << std::endl;
+				auto pmt = env[namePmt].get_primitive();
+				carpentryPrimitives->insert(pmt);
 			}
 			return "";
 		}
