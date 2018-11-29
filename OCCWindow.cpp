@@ -108,7 +108,7 @@ void OCCWindow::setup_editor()
 	const int tabStop = 4;
 	QFontMetrics metrics(font);
 	editor->setTabStopWidth(tabStop * metrics.width(' '));
-	editor->setPlainText("(cylinder a 10 1)\n(box b1 1 1 10)\n(translate b1 3.5 3.5 (- -0.5 10))\n(box b2 1 1 10)\n(translate b2 3.5 -3.5 (- -0.5 10))\n(box b3 1 1 10)\n(translate b3 -3.5 3.5 (- -0.5 10))\n(box b4 1 1 10)\n(translate b4 -3.5 -3.5 (- -0.5 10))");
+	editor->setPlainText("(cylinder a 10 1)\n(box b1 1 1 10)\n(translate b1 3.5 3.5 -10)\n(box b2 1 1 10)\n(translate b2 3.5 -3.5 -10)\n(box b3 1 1 10)\n(translate b3 -3.5 3.5 -10)\n(box b4 1 1 10)\n(translate b4 -3.5 -3.5 -10)");
 	//highlighter = new Highlighter(editor->document());
 }
 

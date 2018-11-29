@@ -10,8 +10,11 @@
 #include <Geom_ConicalSurface.hxx>
 #include <Geom_ToroidalSurface.hxx>
 #include <Geom_CylindricalSurface.hxx>
-
+#include <Geom_SurfaceOfLinearExtrusion.hxx>
+#include <Geom_BSplineCurve.hxx>
+#include <GeomAPI_PointsToBSpline.hxx>
 #include <GCE2d_MakeSegment.hxx>
+#include "GEOMAlgo_Splitter.hxx"
 
 #include <TopExp.hxx>
 #include <TopExp_Explorer.hxx>
@@ -45,6 +48,11 @@
 #include <BRepAlgoAPI_Common.hxx>
 
 #include <gp_Trsf.hxx>
+
+#include <GeomTools.hxx>
+#include <Geom_Circle.hxx>
+#include <Geom_RectangularTrimmedSurface.hxx>
+
 
 bool show_err1_flag = true;
 bool show_err2_flag = true;
@@ -262,7 +270,34 @@ std::string OCCDomainLang::eval(PList &pp, Environment &env)
 				double H = QString(valueHeight.c_str()).toDouble();
  				MyPrimitive* creatingPrimitive = make_cylinder(R, H);
 				
-				carpentryPrimitives->insert(creatingPrimitive);
+		
+				TColgp_Array1OfPnt array(1, 7); // sizing array    
+				array.SetValue(1, gp_Pnt(-14, 0, 0));
+				array.SetValue(2, gp_Pnt(-4, 0, 0));
+				array.SetValue(3, gp_Pnt(-7, 2, 0));
+				array.SetValue(4, gp_Pnt(-6, 3, 0));
+				array.SetValue(5, gp_Pnt(-4, 3, 0));
+				array.SetValue(6, gp_Pnt(-3, 5, 0));
+				array.SetValue(7, gp_Pnt(-3, 15, 0));
+
+				Handle(Geom_BSplineCurve) aCurve = GeomAPI_PointsToBSpline(array).Curve();
+				Handle(Geom_Surface) S = new Geom_SurfaceOfLinearExtrusion(aCurve, gp_Dir(0, 0, 1));
+				Handle(Geom_Surface) TS = new Geom_RectangularTrimmedSurface(S, -50, 50, false);
+				TopoDS_Face F = BRepBuilderAPI_MakeFace(TS, 1.0);
+				GEOMAlgo_Splitter splitter;
+				splitter.AddArgument(creatingPrimitive->shape);
+				splitter.AddTool(F);
+				splitter.Perform();
+				//creatingPrimitive->shape = splitter.Shape();
+				TopTools_ListIteratorOfListOfShape iter(splitter.Modified(creatingPrimitive->shape));
+
+				for (; iter.More(); iter.Next())
+				{
+					TopoDS_Shape shape = iter.Value();
+
+					carpentryPrimitives->insert(new MyPrimitive(shape));
+					break;
+				}
 				env[name] = Object(creatingPrimitive);
 				return "";
 			}
@@ -283,7 +318,7 @@ std::string OCCDomainLang::eval(PList &pp, Environment &env)
 				double H = QString(valueHeight.c_str()).toDouble();
 				double L = QString(valueDepth.c_str()).toDouble();
 				MyPrimitive* creatingPrimitive = make_box(W, H, L);
-
+				
 				carpentryPrimitives->insert(creatingPrimitive);
 				env[name] = Object(creatingPrimitive);
 
@@ -306,6 +341,24 @@ std::string OCCDomainLang::eval(PList &pp, Environment &env)
 				translate_prmt(pmt, valueX, valueY, valueZ);
 				//pmt->SetTranslation(Vector3D(valueX, valueY, valueZ));
 			}	
+			return "";
+		}
+		else if (proc == "translate")
+		{
+			if (pp.size() != 5) return ("ill expression");
+			std::string name = pp.get(1).elem(0);
+			if (env.find(name) != env.end())
+			{
+				auto pmt = env[name].get_primitive();
+				PList x = pp.get(2);
+				PList y = pp.get(3);
+				PList z = pp.get(4);
+				double valueX = QString::fromStdString(eval(x, env)).toDouble();
+				double valueY = QString::fromStdString(eval(y, env)).toDouble();
+				double valueZ = QString::fromStdString(eval(z, env)).toDouble();
+				translate_prmt(pmt, valueX, valueY, valueZ);
+				//pmt->SetTranslation(Vector3D(valueX, valueY, valueZ));
+			}
 			return "";
 		}
 		else if (proc == "set!") { return ((proc + " - not yet implemented!")); }
