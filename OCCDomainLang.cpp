@@ -53,10 +53,23 @@
 #include <Geom_Circle.hxx>
 #include <Geom_Plane.hxx>
 #include <Geom_RectangularTrimmedSurface.hxx>
-
+#include <BRepTools.hxx>
+#include <GeomLProp_SLProps.hxx>
+#include <GProp_GProps.hxx>
+#include <BRepGProp.hxx>
+#include <BRepTools_WireExplorer.hxx>
+#include <IntCurvesFace_ShapeIntersector.hxx>
+#include <BRepAlgoAPI_Section.hxx>
+#include <BRepExtrema_ExtFF.hxx>
+#include <BRepExtrema_DistShapeShape.hxx>
 
 bool show_err1_flag = true;
 bool show_err2_flag = true;
+
+MyPrimitive::MyPrimitive(const TopoDS_Shape& _shape) { 
+	shape = _shape; 
+
+};
 
 MyPrimitive* make_box(double W, double H, double L)
 {
@@ -309,6 +322,24 @@ std::string OCCDomainLang::eval(PList &pp, Environment &env)
 				
 				env[name] = Object(creatingPrimitive);
 
+				for (TopExp_Explorer faceExplorer(creatingPrimitive->shape, TopAbs_FACE); faceExplorer.More(); faceExplorer.Next())
+				{
+					// get current face and convert to TopoDS_Face
+					const TopoDS_Face& face = TopoDS::Face(faceExplorer.Current());
+					for (TopExp_Explorer wireExplorer(face, TopAbs_WIRE); wireExplorer.More(); wireExplorer.Next())
+					{
+						const TopoDS_Wire& wire = TopoDS::Wire(wireExplorer.Current());
+						for (BRepTools_WireExplorer expVert(wire); expVert.More(); expVert.Next())
+						{
+							const TopoDS_Vertex& vert = expVert.CurrentVertex();
+							// process the vertex
+							gp_Pnt P = BRep_Tool::Pnt(vert);
+							std::cout << P.X() << " " << P.Y() << " " << P.Z() << std::endl;
+						}
+					}
+					
+				}
+
 				return "";
 			}
 		}
@@ -412,15 +443,106 @@ std::string OCCDomainLang::eval(PList &pp, Environment &env)
 				gp_Pnt P(lst[0], lst[1], lst[2]);
 				gp_Dir D(lst[3], lst[4], lst[5]);
 				gp_Pln Plan(P, D);
+
 				TopoDS_Face F = BRepBuilderAPI_MakeFace(Plan);
 				//TopoDS_Shape F = BRepAlgo_Section(pmt->shape, maLame);
 
+				std::vector<std::pair<TopoDS_Face, gp_Dir>> candidateFaces;
+
+				// Define the tool
+				for (TopExp_Explorer faceExplorer(pmt->shape, TopAbs_FACE); faceExplorer.More(); faceExplorer.Next())
+				{
+					// get current face and convert to TopoDS_Face
+					const TopoDS_Face& face = TopoDS::Face(faceExplorer.Current());
+
+					BRepAlgoAPI_Section ffsect(face, F, Standard_True);
+					ffsect.Approximation(Standard_True);
+					ffsect.Build();
+					if (ffsect.SectionEdges().Size() > 0)
+					{
+						Standard_Real umin, umax, vmin, vmax;
+						BRepTools::UVBounds(face, umin, umax, vmin, vmax);
+						Handle(Geom_Surface) aSurface = BRep_Tool::Surface(face);
+						GeomLProp_SLProps props(aSurface, umin, vmin, 1, 0.01);
+						gp_Dir normal = props.Normal();
+						// std::cout << normal.X() << " " << normal.Y() << " " << normal.Z() << std::endl;
+						// std::cout << "dot = " << normal.Dot(D) << std::endl;
+						
+						// Approximate
+						if (std::fabs(normal.Dot(D)) < 1e-4) 
+						{
+							candidateFaces.push_back(std::make_pair(face, normal));
+						}
+					}
+					
+// 					GProp_GProps myProps;
+// 					BRepGProp::SurfaceProperties(face, myProps);
+// 					Standard_Real area = myProps.Mass();
+// 					std::cout << "area of the surface is " << area << std::endl;
+				}
+
+				std::vector<std::pair<double, double>> foundSolutions;
+				for (int i = 0; i < candidateFaces.size(); ++i)
+				{
+					for (int j = i+1; j < candidateFaces.size(); ++j)
+					{
+						for (int k = j+1; k < candidateFaces.size(); ++k)
+						{
+							gp_Dir n1 = candidateFaces[i].second;
+							gp_Dir n2 = candidateFaces[j].second;
+							gp_Dir n3 = candidateFaces[k].second;
+							if (n1.Dot(n2) < 1e-4 && n1.Dot(n3) < 1e-4)
+							{
+								BRepExtrema_ExtFF dss(candidateFaces[j].first, candidateFaces[k].first);
+								if (dss.IsDone() && dss.NbExt())
+								{
+									double dist1 = std::sqrt(dss.SquareDistance(1));
+									
+									for (int m = 0; m < candidateFaces.size(); ++m)
+									{
+										if (m == i || m == j || m == k) continue;
+										BRepExtrema_DistShapeShape extrema(candidateFaces[i].first, candidateFaces[m].first);
+										if (extrema.IsDone())
+										{
+											double dist2 = extrema.Value();
+											foundSolutions.push_back(std::make_pair(dist1, dist2));
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+
+				// see if manufacturable
+				bool isManufacturable = false;
+				for (auto& s : foundSolutions)
+				{
+					if (s.first < CHOPSAW_WIDTH_MAX && s.first > CHOPSAW_WIDTH_MIN && s.second < CHOPSAW_HEIGHT)
+					{
+						isManufacturable = true;
+						break;
+					}
+				}
+
+				if (!isManufacturable) {
+					QString chopsawHint = "Chop saw is not suitable! H = " + QString::number(CHOPSAW_HEIGHT) +
+						", W =[" + QString::number(CHOPSAW_WIDTH_MIN) +
+						", " + QString::number(CHOPSAW_WIDTH_MAX) +"]";
+					
+					emit compiler_hints(chopsawHint);
+					return "";
+				}
+
+				std::cout << "cut" << std::endl;
 				GEOMAlgo_Splitter splitter;
 				splitter.AddArgument(pmt->shape);
 				splitter.AddTool(F);
 				splitter.Perform();
 				TopTools_ListIteratorOfListOfShape iter(splitter.Modified(pmt->shape));
 
+				std::cout << splitter.Modified(pmt->shape).Size() << std::endl;
+				
 				MyPrimitive* candPmt[2];
 				for (int cnt = 0; iter.More() && cnt < 2; iter.Next(), ++cnt)
 				{
@@ -432,7 +554,6 @@ std::string OCCDomainLang::eval(PList &pp, Environment &env)
 
 				env[namePmt] = Object(candPmt[0]);
 				env[nameNew] = Object(candPmt[1]);
-
 				return "";
 			}
 		}

@@ -4,6 +4,12 @@
 #include <QGLWidget>
 
 #include <AIS_InteractiveContext.hxx>
+#include <AIS_Manipulator.hxx>
+#include <AIS_ManipulatorMode.hxx>
+#include <TopoDS_Face.hxx>
+#include <AIS_Shape.hxx>
+
+#include "PHELM.h"
 
 class QMenu;
 class QRubberBand;
@@ -25,11 +31,22 @@ public:
         CurAction3d_DynamicRotation
     };
 
+	enum InterMode
+	{
+		Viewing,
+		Manipulating	
+	};
+
 public:
     //! constructor.
 	OCCOpenGL(QWidget* parent);
 
-    const Handle(AIS_InteractiveContext)& getContext() const;
+	const Handle(AIS_InteractiveContext)& getContext() const;
+	PHELM* getHELM() { return helm; }
+	
+	void fuse_selected();
+
+	void intersect_selected();
 
 signals:
     void selectionChanged(void);
@@ -64,7 +81,7 @@ protected:
     virtual void onMouseMove(const int theFlags, const QPoint thePoint);
 
     // Popup menu.
-    virtual void addItemInPopup(QMenu* theMenu);
+	virtual void addItemInPopup(QMenu* theMenu);
 
 protected:
     void init(void);
@@ -78,6 +95,7 @@ protected:
     void drawRubberBand(const int minX, const int minY, const int maxX, const int maxY);
     void panByMiddleButton(const QPoint& thePoint);
 
+
 private:
 
     //! the occ viewer.
@@ -88,6 +106,8 @@ private:
 
     //! the occ context.
     Handle(AIS_InteractiveContext) myContext;
+
+	Handle(AIS_Manipulator) aManipulator;
 
     //! save the mouse position.
     Standard_Integer myXmin;
@@ -103,7 +123,14 @@ private:
 
     //! rubber rectangle for the mouse selection.
     QRubberBand* myRectBand;
+	gp_Trsf manipulatorTrsf;
+	std::vector<Handle(AIS_InteractiveObject)> vecShapes;
+	std::pair<Handle(AIS_InteractiveObject), bool> pairParaShape;
 
+	int interactiveMode;
+
+	// HELM 
+	PHELM *helm;
 };
 
 #endif 

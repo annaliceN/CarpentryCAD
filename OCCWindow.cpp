@@ -7,6 +7,10 @@
 #include <QMessageBox>
 #include <QDockWidget>
 #include <QDateTime>
+#include <QDialogButtonBox>
+#include <QVBoxLayout>
+#include <QDoubleSpinBox>
+#include <QLineEdit>
 
 #include <gp_Circ.hxx>
 #include <gp_Elips.hxx>
@@ -77,6 +81,8 @@ OCCWindow::OCCWindow(QWidget *parent)
 
 	myOCCOpenGL = new OCCOpenGL(this);
 
+	DSL = new OCCDomainLang();
+
 	setCentralWidget(myOCCOpenGL);
 
 	setup_editor();
@@ -144,14 +150,22 @@ void OCCWindow::intialize_widget()
 	res->setAllowedAreas(Qt::BottomDockWidgetArea);
 	addDockWidget(Qt::BottomDockWidgetArea, res);
 
+	outputEditor = new QTextEdit();
+	outputEditor->setMinimumHeight(200);
+	res->setWidget(outputEditor);
+
+	QDockWidget *cad = new QDockWidget(tr("CAD Operations"), this);
+	cad->setAllowedAreas(Qt::LeftDockWidgetArea);
+	addDockWidget(Qt::LeftDockWidgetArea, cad);
+
 	QFont font;
 	font.setFamily("Courier");
 	font.setFixedPitch(true);
 	font.setPointSize(10);
-	outputEditor = new QTextEdit();
-	outputEditor->setFont(font);
-	outputEditor->setMinimumHeight(200);
-	res->setWidget(outputEditor);
+	cadEditor = new CodeEditor();
+	cadEditor->setFont(font);
+	cadEditor->setMinimumWidth(200);
+	cad->setWidget(cadEditor);
 }
 
 void OCCWindow::createActions(void)
@@ -167,10 +181,35 @@ void OCCWindow::createActions(void)
 	connect(ui.actionReset, SIGNAL(triggered()), myOCCOpenGL, SLOT(reset()));
 	connect(ui.actionFitAll, SIGNAL(triggered()), myOCCOpenGL, SLOT(fitAll()));
 
-	connect(ui.actionCylinder, SIGNAL(triggered()), this, SLOT(on_action_compile()));
+	//connect(ui.actionCylinder, SIGNAL(triggered()), this, SLOT(on_action_compile()));
+	connect(ui.actionBox, SIGNAL(triggered()), this, SLOT(on_action_make_box()));
+	connect(ui.actionCone, SIGNAL(triggered()), this, SLOT(on_action_make_cone()));
+	connect(ui.actionSphere, SIGNAL(triggered()), this, SLOT(on_action_make_sphere()));
+	connect(ui.actionCylinder, SIGNAL(triggered()), this, SLOT(on_action_make_cylinder()));
+
+	// operations
+	connect(ui.actionFuse, SIGNAL(triggered()), this, SLOT(on_action_fuse()));
+	connect(ui.actionCut, SIGNAL(triggered()), this, SLOT(on_action_cut()));
 
 	// Help
 	connect(ui.actionAbout, SIGNAL(triggered()), this, SLOT(about()));
+
+	connect(ui.actionHelix, SIGNAL(triggered()), this, SLOT(on_action_compile()));
+
+	connect(myOCCOpenGL->getHELM(), SIGNAL(add_cad_code(std::string)), this, SLOT(display_cad_code(std::string)));
+
+	connect(DSL, SIGNAL(compiler_hints(QString)), this, SLOT(on_action_compiler_hints(QString)));
+}
+
+void OCCWindow::display_cad_code(std::string code)
+{
+	cadEditor->appendPlainText(QString(code.c_str()));
+}
+
+void OCCWindow::on_action_compiler_hints(QString line)
+{
+	outputResult(line);
+	outputResult("Failed!");
 }
 
 void OCCWindow::createMenus(void)
@@ -180,18 +219,30 @@ void OCCWindow::createMenus(void)
 void OCCWindow::createToolBars(void)
 {
 	QToolBar* aToolBar = addToolBar(tr("&Navigate"));
+	aToolBar->setStyleSheet("QToolBar {background: rgb(255, 255, 255)}");
 	aToolBar->addAction(ui.actionZoom);
 	aToolBar->addAction(ui.actionPan);
 	aToolBar->addAction(ui.actionRotate);
 
 	aToolBar = addToolBar(tr("&View"));
+	aToolBar->setStyleSheet("QToolBar {background: rgb(255, 255, 255)}");
 	aToolBar->addAction(ui.actionReset);
 	aToolBar->addAction(ui.actionFitAll);
 
 	aToolBar = addToolBar(tr("&Primitive"));
+	aToolBar->setStyleSheet("QToolBar {background: rgb(255, 255, 255)}");
 	aToolBar->addSeparator();
+	aToolBar->addAction(ui.actionBox);
+	aToolBar->addAction(ui.actionCone);
+	aToolBar->addAction(ui.actionSphere);
 	aToolBar->addAction(ui.actionCylinder);
 
+	aToolBar->addAction(ui.actionFuse);
+	aToolBar->addAction(ui.actionCut);
+
+	aToolBar->addSeparator();
+	aToolBar->addAction(ui.actionHelix);
+	
 // 	aToolBar = addToolBar(tr("Help"));
 // 	aToolBar->addAction(ui.actionAbout);
 }
@@ -210,15 +261,143 @@ void OCCWindow::outputResult(const QString& res)
 	outputEditor->append(authDate + res);
 }
 
+void OCCWindow::on_action_make_box()
+{
+	QDialog * d = new QDialog();
+	QVBoxLayout * vbox = new QVBoxLayout();
+
+	QDoubleSpinBox * widthBox = new QDoubleSpinBox();
+	widthBox->setValue(1.0);
+	QDoubleSpinBox * lengthBox = new QDoubleSpinBox();
+	lengthBox->setValue(1.0);
+	QDoubleSpinBox * heightBox = new QDoubleSpinBox();
+	heightBox->setValue(1.0);
+	QDialogButtonBox * buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok
+		| QDialogButtonBox::Cancel);
+	QObject::connect(buttonBox, SIGNAL(accepted()), d, SLOT(accept()));
+	QObject::connect(buttonBox, SIGNAL(rejected()), d, SLOT(reject()));
+
+	vbox->addWidget(widthBox);
+	vbox->addWidget(lengthBox);
+	vbox->addWidget(heightBox);
+	vbox->addWidget(buttonBox);
+
+	d->setLayout(vbox);
+
+	int result = d->exec();
+	double valWidth, valLength, valHeight;
+	
+	if (result == QDialog::Accepted)
+	{
+		valWidth = widthBox->value();
+		valHeight = heightBox->value();
+		valLength = lengthBox->value();
+	}
+	
+
+	TopoDS_Shape aTopoBox = BRepPrimAPI_MakeBox(valWidth, valHeight, valLength).Shape();
+	Handle(AIS_Shape) anAisBox = new AIS_Shape(aTopoBox);
+
+	MyPrimitive* anPrimCylinder = new MyBox(valWidth, valLength, valHeight);
+
+	myOCCOpenGL->getHELM()->createShape(anAisBox, anPrimCylinder);
+
+	anAisBox->SetColor(Quantity_NOC_GOLD);
+
+	myOCCOpenGL->getContext()->Display(anAisBox, Standard_True);
+}
+
+void OCCWindow::on_action_make_cone()
+{
+	gp_Ax2 anAxis;
+
+	anAxis.SetLocation(gp_Pnt(0.0, 0.0, 0.0));
+	TopoDS_Shape aTopoCone = BRepPrimAPI_MakeCone(anAxis, 3.0, 0.0, 5.0).Shape();
+	Handle(AIS_Shape) anAisCone = new AIS_Shape(aTopoCone);
+
+	anAisCone->SetColor(Quantity_NOC_GOLD);
+
+	myOCCOpenGL->getContext()->Display(anAisCone, Standard_True);
+}
+
+void OCCWindow::on_action_make_sphere()
+{
+	gp_Ax2 anAxis;
+	anAxis.SetLocation(gp_Pnt(0.0, 0.0, 0.0));
+	auto parametricSphere = BRepPrimAPI_MakeSphere(anAxis, 3.0);
+	TopoDS_Shape aTopoSphere = parametricSphere.Shape();
+	Handle(AIS_Shape) anAisSphere = new AIS_Shape(aTopoSphere);
+
+	anAisSphere->SetColor(Quantity_NOC_GOLD);
+
+	myOCCOpenGL->getContext()->Display(anAisSphere, Standard_True);
+}
+
+void OCCWindow::on_action_make_cylinder()
+{
+	QDialog * d = new QDialog();
+	QVBoxLayout * vbox = new QVBoxLayout();
+
+	QDoubleSpinBox * radiusBox = new QDoubleSpinBox();
+	radiusBox->setValue(1.0);
+	QDoubleSpinBox * heightBox = new QDoubleSpinBox();
+	heightBox->setValue(1.0);
+	QDialogButtonBox * buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok
+		| QDialogButtonBox::Cancel);
+
+	QObject::connect(buttonBox, SIGNAL(accepted()), d, SLOT(accept()));
+	QObject::connect(buttonBox, SIGNAL(rejected()), d, SLOT(reject()));
+	vbox->addWidget(radiusBox);
+	vbox->addWidget(heightBox);
+	vbox->addWidget(buttonBox);
+
+	d->setLayout(vbox);
+
+	int result = d->exec();
+	double valRadius, valHeight;
+
+	if (result == QDialog::Accepted)
+	{
+		valRadius = radiusBox->value();
+		valHeight = heightBox->value();
+	}
+
+	gp_Ax2 anAxis;
+	anAxis.SetLocation(gp_Pnt(0.0, 0.0, 0.0));
+
+	TopoDS_Shape aTopoCylinder = BRepPrimAPI_MakeCylinder(anAxis, valRadius, valHeight).Shape();
+	Handle(AIS_Shape) anAisCylinder = new AIS_Shape(aTopoCylinder);
+	
+	MyPrimitive* anPrimCylinder = new MyClinder(valRadius, valHeight);
+
+	myOCCOpenGL->getHELM()->createShape(anAisCylinder, anPrimCylinder);
+
+	anAisCylinder->SetColor(Quantity_NOC_GOLD);
+	
+	myOCCOpenGL->getContext()->Display(anAisCylinder, Standard_True);
+}
+
+void OCCWindow::on_action_fuse()
+{
+	myOCCOpenGL->fuse_selected();
+}
+
+void OCCWindow::on_action_cut()
+{
+	myOCCOpenGL->intersect_selected();
+}
+
 void OCCWindow::on_action_compile()
 {
 	std::string sourceCode = editor->toPlainText().toStdString();
 	outputResult("Source code file size: " + QString::number(sourceCode.length()/1024.0) + "kb.");
 	outputResult("Start compiling...");
 	
-	OCCDomainLang DSL;
+	if (DSL != nullptr) delete DSL;
+	DSL = new OCCDomainLang();
+	connect(DSL, SIGNAL(compiler_hints(QString)), this, SLOT(on_action_compiler_hints(QString)));
 
-	bool isSucces = DSL.compile(sourceCode);
+	bool isSucces = DSL->compile(sourceCode);
 	
 	if (!isSucces)
 	{
@@ -226,9 +405,9 @@ void OCCWindow::on_action_compile()
 		return;
 	}
 
-	outputResult("Successfully compiled.");
+	//outputResult("Successfully compiled.");
 
-	vecShapes = convert_to_AIS_shape(*DSL.carpentryPrimitives);
+	vecShapes = convert_to_AIS_shape(*(DSL->carpentryPrimitives));
 
 	myOCCOpenGL->getContext()->RemoveAll(true);
 	for (auto& s : vecShapes)

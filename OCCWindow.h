@@ -3,8 +3,6 @@
 
 #include "ui_occQt.h"
 
-#include "highlighter.h"
-#include "codeeditor.h"
 
 #include <TopoDS.hxx>
 #include <AIS_Shape.hxx>
@@ -12,6 +10,10 @@
 
 #include <memory>
 #include <exception>
+
+#include "highlighter.h"
+#include "codeeditor.h"
+#include "OCCDomainLang.h"
 
 class OCCOpenGL;
 
@@ -33,26 +35,44 @@ public:
 
     void createToolBars(void);
 	
-	
-
 	void outputResult(const QString & res);
 
 private slots:
     void about(void);
+
 	void on_action_compile();
+
+	void on_action_make_box();
+
+	void on_action_make_cone();
+
+	void on_action_make_sphere();
+
+	void on_action_make_cylinder();
+
+	void on_action_fuse();
+
+	void on_action_cut();
+
+	void display_cad_code(std::string code);
+
+	void on_action_compiler_hints(QString line);
 
 private:
     Ui::occQtClass ui;
 
 	OCCOpenGL* myOCCOpenGL;
 	CodeEditor *editor;
+	CodeEditor *cadEditor;
 	QTextEdit *outputEditor;
 	Highlighter *highlighter;
+	OCCDomainLang *DSL;
 
 	// primitives
 	TopoDS_Shape aTopoBox;
 
 	std::vector<Handle(AIS_Shape)> vecShapes;
+
 };
 
 #endif

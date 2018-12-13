@@ -1,16 +1,20 @@
-#include <OpenGl_GraphicDriver.hxx>
-
-#include "OCCOpenGL.h"
+﻿#include "OCCOpenGL.h"
 
 #include <QMenu>
 #include <QMouseEvent>
 #include <QRubberBand>
 #include <QStyleFactory>
 
-#include <V3d_View.hxx>
 
+#include <OpenGl_GraphicDriver.hxx>
+#include <V3d_View.hxx>
 #include <Aspect_Handle.hxx>
 #include <Aspect_DisplayConnection.hxx>
+
+#include <BRepAlgoAPI_Fuse.hxx>
+#include <BRepAlgoAPI_Cut.hxx>
+#include <BRepBuilderAPI_Transform.hxx>
+
 
 #ifdef WNT
     #include <WNT_Window.hxx>
@@ -44,14 +48,16 @@ OCCOpenGL::OCCOpenGL(QWidget* parent )
     myYmax(0),    
     myCurrentMode(CurAction3d_DynamicRotation),
     myDegenerateModeIsOn(Standard_True),
-    myRectBand(NULL)
+    myRectBand(NULL),
+	interactiveMode(InterMode::Viewing)
 {
+	helm = new PHELM();
+
     // No Background
     setBackgroundRole( QPalette::NoRole );
 
     // Enable the mouse tracking, by default the mouse tracking is disabled.
     setMouseTracking( true );
-
 }
 
 void OCCOpenGL::init()
@@ -100,6 +106,19 @@ void OCCOpenGL::init()
     myView->TriedronDisplay(Aspect_TOTP_LEFT_LOWER, Quantity_NOC_BLACK, 0.08, V3d_ZBUFFER);
 
     myContext->SetDisplayMode(AIS_Shaded, Standard_True);
+	myContext->MainSelector()->SetPickClosest(Standard_False);
+	
+	// face selection
+	/*
+	myContext->CloseAllContexts(Standard_True);
+	myContext->OpenLocalContext();
+	myContext->ActivateStandardMode(TopAbs_FACE);
+	*/
+
+	aManipulator = new AIS_Manipulator();
+	//aManipulator->SetPart(1, AIS_ManipulatorMode::AIS_MM_Rotation, Standard_False);
+	aManipulator->SetModeActivationOnDetection(Standard_True);
+
 }
 
 const Handle(AIS_InteractiveContext)& OCCOpenGL::getContext() const
@@ -170,9 +189,98 @@ void OCCOpenGL::mousePressEvent( QMouseEvent* theEvent )
 
 void OCCOpenGL::mouseReleaseEvent( QMouseEvent* theEvent )
 {
-    if (theEvent->button() == Qt::LeftButton)
-    {
-        onLButtonUp(theEvent->buttons() | theEvent->modifiers(), theEvent->pos());
+	if (theEvent->button() == Qt::LeftButton)
+	{
+		
+		onLButtonUp(theEvent->buttons() | theEvent->modifiers(), theEvent->pos());
+
+
+		auto numSelected = myContext->NbSelected();
+		if (interactiveMode == InterMode::Manipulating &&
+			numSelected == 1 &&
+			aManipulator->Object().get() != myContext->SelectedInteractive().get())
+		{
+			
+		}
+		else
+		{
+			myContext->InitSelected();
+		}
+
+
+		if ((theEvent->buttons() | theEvent->modifiers()) & Qt::ControlModifier)
+		{
+			if (aManipulator->IsAttached()) aManipulator->Detach();
+			
+			if (numSelected > 1)
+			{
+				vecShapes.clear();
+				while (myContext->MoreSelected())
+				{
+					if (myContext->HasSelectedShape())
+					{
+						auto selectedInteractiveObj = myContext->SelectedInteractive();
+						vecShapes.emplace_back(selectedInteractiveObj);
+					}
+					myContext->NextSelected();
+				}
+			}
+			std::cout << "vecshapes " << vecShapes.size() << std::endl;
+			// If CTRL pressed, only execute it
+			return;
+		}
+
+		if (numSelected == 1 && interactiveMode == InterMode::Viewing)
+		{
+			while (myContext->MoreSelected())
+			{
+				if (myContext->HasSelectedShape())
+				{
+					auto selectedInteractiveObj = myContext->SelectedInteractive();
+					AIS_Manipulator::BehaviorOnTransform behavior;
+					behavior.SetFollowRotation(Standard_True);
+					behavior.SetFollowTranslation(Standard_True);
+					aManipulator->SetTransformBehavior(behavior);
+					aManipulator->Attach(selectedInteractiveObj);
+				}
+				myContext->NextSelected();
+			}
+			
+			// Enable manipulate mode
+			interactiveMode = InterMode::Manipulating;
+		}
+
+		if (numSelected == 0 && interactiveMode == InterMode::Manipulating)
+		{
+			interactiveMode = InterMode::Viewing;
+			
+			// Update internal model
+			
+			aManipulator->Detach();
+			aManipulator->SetModeActivationOnDetection(Standard_True);
+			myView->Redraw();
+		}
+
+		if (numSelected == 1 && interactiveMode == InterMode::Manipulating && aManipulator->HasActiveTransformation())
+		{
+			{
+				Handle(AIS_Shape) selectedShape = Handle(AIS_Shape)::DownCast(aManipulator->Object());
+				std::cout << aManipulator->IsModeActivationOnDetection() << std::endl;
+				BRepBuilderAPI_Transform trsf(selectedShape->Shape(), manipulatorTrsf);
+				
+				auto updatedShape = trsf.Shape();
+				selectedShape->Set(updatedShape);
+
+				// TODO: Get full transformation
+				gp_XYZ transPart = manipulatorTrsf.TranslationPart();
+				helm->transformShape(selectedShape, transPart);
+			}
+
+			aManipulator->StopTransform(Standard_True);
+			aManipulator->SetModeActivationOnDetection(Standard_True);
+
+		}
+		
     }
     else if (theEvent->button() == Qt::MidButton)
     {
@@ -180,6 +288,29 @@ void OCCOpenGL::mouseReleaseEvent( QMouseEvent* theEvent )
     }
     else if (theEvent->button() == Qt::RightButton)
     {
+		return;
+		inputEvent(theEvent->pos().x(), theEvent->pos().y());
+
+		// select an object if it can be changed by parameters
+		pairParaShape.second = false;
+		myContext->InitSelected();
+
+		auto numSelected = myContext->NbSelected();
+		std::cout << "nb selected: = " << numSelected << std::endl;
+		if (numSelected != 0)
+		{
+			while (myContext->MoreSelected())
+			{
+				if (myContext->HasSelectedShape())
+				{
+					auto selectedInteractiveObj = myContext->SelectedInteractive();
+					pairParaShape.first = selectedInteractiveObj;
+					pairParaShape.second = true;
+				}
+				myContext->NextSelected();
+			}
+		}
+
         onRButtonUp(theEvent->buttons() | theEvent->modifiers(), theEvent->pos());
     }
 }
@@ -201,55 +332,32 @@ void OCCOpenGL::onLButtonDown( const int /*theFlags*/, const QPoint thePoint )
     myYmin = thePoint.y();
     myXmax = thePoint.x();
     myYmax = thePoint.y();
-
+	std::cout << "Mode " << aManipulator->ActiveMode() << std::endl;
+	if (aManipulator->HasActiveMode())
+	{
+		aManipulator->SetModeActivationOnDetection(Standard_False);
+		aManipulator->StartTransform(myXmin, myYmin, myView);
+		std::cout << "started" << std::endl;
+	}
 }
 
 void OCCOpenGL::onMButtonDown( const int /*theFlags*/, const QPoint thePoint )
 {
-    // Save the current mouse coordinate in min.
-    myXmin = thePoint.x();
-    myYmin = thePoint.y();
-    myXmax = thePoint.x();
-    myYmax = thePoint.y();
-
-    if (myCurrentMode == CurAction3d_DynamicRotation)
-    {
-        myView->StartRotation(thePoint.x(), thePoint.y());
-    }
+   
 }
 
-void OCCOpenGL::onRButtonDown( const int /*theFlags*/, const QPoint /*thePoint*/ )
+void OCCOpenGL::onRButtonDown( const int /*theFlags*/, const QPoint thePoint )
 {
+	// Save the current mouse coordinate in min.
+	myXmin = thePoint.x();
+	myYmin = thePoint.y();
+	myXmax = thePoint.x();
+	myYmax = thePoint.y();
 
-}
-
-void OCCOpenGL::onMouseWheel( const int /*theFlags*/, const int theDelta, const QPoint thePoint )
-{
-    Standard_Integer aFactor = 16;
-
-    Standard_Integer aX = thePoint.x();
-    Standard_Integer aY = thePoint.y();
-
-    if (theDelta > 0)
-    {
-        aX += aFactor;
-        aY += aFactor;
-    }
-    else
-    {
-        aX -= aFactor;
-        aY -= aFactor;
-    }
-
-    myView->Zoom(thePoint.x(), thePoint.y(), aX, aY);
-}
-
-void OCCOpenGL::addItemInPopup( QMenu* /*theMenu*/ )
-{
-}
-
-void OCCOpenGL::popup( const int /*x*/, const int /*y*/ )
-{
+	if (myCurrentMode == CurAction3d_DynamicRotation)
+	{
+		myView->StartRotation(thePoint.x(), thePoint.y());
+	}
 }
 
 void OCCOpenGL::onLButtonUp( const int theFlags, const QPoint thePoint )
@@ -273,19 +381,32 @@ void OCCOpenGL::onLButtonUp( const int theFlags, const QPoint thePoint )
         }
     }
 
+
 }
 
 void OCCOpenGL::onMButtonUp( const int /*theFlags*/, const QPoint thePoint )
 {
-    if (thePoint.x() == myXmin && thePoint.y() == myYmin)
-    {
-        panByMiddleButton(thePoint);
-    }
+
+	if (thePoint.x() == myXmin && thePoint.y() == myYmin)
+	{
+		panByMiddleButton(thePoint);
+	}
+
 }
 
 void OCCOpenGL::onRButtonUp( const int /*theFlags*/, const QPoint thePoint )
 {
-    popup(thePoint.x(), thePoint.y());
+	QMenu menu;
+
+	if (pairParaShape.second)
+	{
+		QAction* paramAct = new QAction("Set its parameters", this);
+		menu.addAction(paramAct);
+	}
+	QAction* openAct = new QAction("Open...", this);
+	menu.addAction(openAct);
+	menu.addSeparator();
+	menu.exec(mapToGlobal(thePoint));
 }
 
 void OCCOpenGL::onMouseMove( const int theFlags, const QPoint thePoint )
@@ -293,9 +414,18 @@ void OCCOpenGL::onMouseMove( const int theFlags, const QPoint thePoint )
     // Draw the rubber band.
     if (theFlags & Qt::LeftButton)
     {
-        drawRubberBand(myXmin, myYmin, thePoint.x(), thePoint.y());
+		if (interactiveMode == InterMode::Manipulating && aManipulator->HasActiveMode())
+		{
+			manipulatorTrsf = aManipulator->Transform(thePoint.x(), thePoint.y(), myView);
+			myView->Redraw();
+		}
+		else
+		{
+			drawRubberBand(myXmin, myYmin, thePoint.x(), thePoint.y());
 
-        dragEvent(thePoint.x(), thePoint.y());
+			dragEvent(thePoint.x(), thePoint.y());
+
+		}
     }
 
     // Ctrl for multi selection.
@@ -309,7 +439,7 @@ void OCCOpenGL::onMouseMove( const int theFlags, const QPoint thePoint )
     }
 
     // Middle button.
-    if (theFlags & Qt::MidButton)
+    if (theFlags & Qt::RightButton)
     {
         switch (myCurrentMode)
         {
@@ -334,11 +464,39 @@ void OCCOpenGL::onMouseMove( const int theFlags, const QPoint thePoint )
 
 }
 
+
+void OCCOpenGL::onMouseWheel(const int /*theFlags*/, const int theDelta, const QPoint thePoint)
+{
+	Standard_Integer aFactor = 16;
+
+	Standard_Integer aX = thePoint.x();
+	Standard_Integer aY = thePoint.y();
+
+	if (theDelta > 0)
+	{
+		aX += aFactor;
+		aY += aFactor;
+	}
+	else
+	{
+		aX -= aFactor;
+		aY -= aFactor;
+	}
+
+	myView->Zoom(thePoint.x(), thePoint.y(), aX, aY);
+}
+
+void OCCOpenGL::addItemInPopup(QMenu* /*theMenu*/)
+{
+	
+}
+
+
 void OCCOpenGL::dragEvent( const int x, const int y )
 {
     myContext->Select(myXmin, myYmin, x, y, myView, Standard_True);
 
-    emit selectionChanged();
+	emit selectionChanged();
 }
 
 void OCCOpenGL::multiDragEvent( const int x, const int y )
@@ -353,8 +511,8 @@ void OCCOpenGL::inputEvent( const int x, const int y )
 {
     Q_UNUSED(x);
     Q_UNUSED(y);
+	myContext->Select(Standard_True);
 
-    myContext->Select(Standard_True);
 
     emit selectionChanged();
 }
@@ -371,7 +529,9 @@ void OCCOpenGL::multiInputEvent( const int x, const int y )
 
 void OCCOpenGL::moveEvent( const int x, const int y )
 {
+
     myContext->MoveTo(x, y, myView, Standard_True);
+
 }
 
 void OCCOpenGL::multiMoveEvent( const int x, const int y )
@@ -405,6 +565,9 @@ void OCCOpenGL::drawRubberBand( const int minX, const int minY, const int maxX, 
 
 void OCCOpenGL::panByMiddleButton( const QPoint& thePoint )
 {
+	fitAll();
+	return;
+
     Standard_Integer aCenterX = 0;
     Standard_Integer aCenterY = 0;
 
@@ -414,4 +577,48 @@ void OCCOpenGL::panByMiddleButton( const QPoint& thePoint )
     aCenterY = aSize.height() / 2;
 
     myView->Pan(aCenterX - thePoint.x(), thePoint.y() - aCenterY);
+}
+
+
+void OCCOpenGL::fuse_selected()
+{
+	if (vecShapes.size() != 2) return;
+
+	if (aManipulator->HasActiveMode()) aManipulator->Detach();
+
+	if (vecShapes[0]->IsKind(STANDARD_TYPE(AIS_Shape)) && vecShapes[1]->IsKind(STANDARD_TYPE(AIS_Shape)))
+	{
+		Handle(AIS_Shape) shapeA = Handle(AIS_Shape)::DownCast(vecShapes[0]);
+		Handle(AIS_Shape) shapeB = Handle(AIS_Shape)::DownCast(vecShapes[1]);
+
+		TopoDS_Shape aFusedShape = BRepAlgoAPI_Fuse(shapeA->Shape(), shapeB->Shape());
+		Handle(AIS_Shape) anAisCylinder = new AIS_Shape(aFusedShape);
+		std::cout << "fused done" << std::endl;
+		myContext->Remove(vecShapes[0], Standard_True);
+		myContext->Remove(vecShapes[1], Standard_True);
+		myContext->Display(anAisCylinder, Standard_True);
+	}
+
+}
+
+void OCCOpenGL::intersect_selected()
+{
+	if (vecShapes.size() != 2) return;
+
+	if (aManipulator->HasActiveMode()) aManipulator->Detach();
+
+	if (vecShapes[0]->IsKind(STANDARD_TYPE(AIS_Shape)) && vecShapes[1]->IsKind(STANDARD_TYPE(AIS_Shape)))
+	{
+		Handle(AIS_Shape) shapeA = Handle(AIS_Shape)::DownCast(vecShapes[0]);
+		Handle(AIS_Shape) shapeB = Handle(AIS_Shape)::DownCast(vecShapes[1]);
+
+		TopoDS_Shape aFusedShape = BRepAlgoAPI_Cut(shapeA->Shape(), shapeB->Shape());
+		Handle(AIS_Shape) intersectedSahpe = new AIS_Shape(aFusedShape);
+		std::cout << "cut done" << std::endl;
+		myContext->Remove(vecShapes[0], Standard_True);
+		myContext->Remove(vecShapes[1], Standard_True);
+		myContext->Display(intersectedSahpe, Standard_True);
+
+		helm->intersectAwithB(shapeA, shapeB, intersectedSahpe);
+	}
 }

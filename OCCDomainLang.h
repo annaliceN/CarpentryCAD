@@ -4,19 +4,14 @@
 #include <vector>
 #include <unordered_map>
 #include <unordered_set>
-#include <QString>
 #include <stack>
+
+#include <QObject>
+#include <QString>
+
 #include <AIS_Shape.hxx>
 
-
-class MyPrimitive
-{
-public:
-	MyPrimitive() {};
-	MyPrimitive(const TopoDS_Shape& _shape) { shape = _shape; };
-	~MyPrimitive() {};
-	TopoDS_Shape shape;
-};
+#include "PrimitiveLibrary.h"
 
 class Object {
 	std::string(*pp)(std::vector<std::string>&);
@@ -148,8 +143,9 @@ public:
 };
 
 
-class OCCDomainLang
+class OCCDomainLang : public QObject
 {
+	Q_OBJECT
 public:
 	OCCDomainLang();
 	~OCCDomainLang();
@@ -157,5 +153,13 @@ public:
 	bool compile(std::string & sourceCode);
 
 	std::unordered_set<MyPrimitive*>* carpentryPrimitives;
+
+signals:
+	void compiler_hints(QString line);
+
+private:
+	const double CHOPSAW_WIDTH_MIN = 0.2;
+	const double CHOPSAW_WIDTH_MAX = 1.0;
+	const double CHOPSAW_HEIGHT = 1.0;
 };
 
