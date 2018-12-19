@@ -81,9 +81,9 @@ OCCWindow::OCCWindow(QWidget *parent)
 
 	myOCCOpenGL = new OCCOpenGL(this);
 
-	DSL = new OCCDomainLang();
-
 	setCentralWidget(myOCCOpenGL);
+
+	DSL = new OCCDomainLang();
 
 	setup_editor();
 	intialize_widget();
@@ -114,13 +114,39 @@ void OCCWindow::setup_editor()
 	const int tabStop = 4;
 	QFontMetrics metrics(font);
 	editor->setTabStopWidth(tabStop * metrics.width(' '));
-	editor->setPlainText("(cylinder a 10 1)\n(box b1 1 1 10)\n(translate b1 3.5 3.5 -10)\n(box b2 1 1 10)\n(translate b2 3.5 -3.5 -10)\n(box b3 1 1 10)\n(translate b3 -3.5 3.5 -10)\n(box b4 1 1 10)\n(translate b4 -3.5 -3.5 -10)\n(list pgn -14 0 0 -4 0 0 -7 2 0 -6 3 0 -4 3 0 -3 5 0 -3 15 0)\n(blade a b pgn)\n(display a b1 b2 b3 b4)");
+	//editor->setPlainText("(cylinder a 10 1)\n(box b1 1 1 10)\n(translate b1 3.5 3.5 -10)\n(box b2 1 1 10)\n(translate b2 3.5 -3.5 -10)\n(box b3 1 1 10)\n(translate b3 -3.5 3.5 -10)\n(box b4 1 1 10)\n(translate b4 -3.5 -3.5 -10)\n(list pgn -14 0 0 -4 0 0 -7 2 0 -6 3 0 -4 3 0 -3 5 0 -3 15 0)\n(blade a b pgn)\n(display a b1 b2 b3 b4)");
 	//highlighter = new Highlighter(editor->document());
 }
 
 void OCCWindow::intialize_widget()
 {
-	QDockWidget *sr = new QDockWidget(tr("Code"), this);
+	MyPropertyWidget *propertyWidget = myOCCOpenGL->getPropertyWidget();
+	propertyWidget->setAllowedAreas(Qt::AllDockWidgetAreas);
+	propertyWidget->setWindowTitle("Properties");
+	QStringList columnNames;
+	columnNames.append("Property");
+	columnNames.append("Value");
+	propertyWidget->ui.tableWidget->setRowCount(0);
+	propertyWidget->ui.tableWidget->setColumnCount(2);
+	propertyWidget->ui.tableWidget->horizontalHeader()->setStretchLastSection(true);
+	propertyWidget->ui.tableWidget->setHorizontalHeaderLabels(columnNames);
+	propertyWidget->setMinimumWidth(400);
+	addDockWidget(Qt::RightDockWidgetArea, propertyWidget);
+
+	QDockWidget *cad = new QDockWidget(tr("CAD Operations"), this);
+	cad->setAllowedAreas(Qt::LeftDockWidgetArea);
+	addDockWidget(Qt::LeftDockWidgetArea, cad);
+
+	QFont font;
+	font.setFamily("Courier");
+	font.setFixedPitch(true);
+	font.setPointSize(10);
+	cadEditor = new CodeEditor();
+	cadEditor->setFont(font);
+	cadEditor->setMinimumWidth(200);
+	cad->setWidget(cadEditor);
+
+	QDockWidget *sr = new QDockWidget(tr("HELM Code"), this);
 	sr->setFeatures(QDockWidget::DockWidgetMovable | QDockWidget::DockWidgetClosable);
 	sr->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
 	sr->setVisible(true);
@@ -153,19 +179,6 @@ void OCCWindow::intialize_widget()
 	outputEditor = new QTextEdit();
 	outputEditor->setMinimumHeight(200);
 	res->setWidget(outputEditor);
-
-	QDockWidget *cad = new QDockWidget(tr("CAD Operations"), this);
-	cad->setAllowedAreas(Qt::LeftDockWidgetArea);
-	addDockWidget(Qt::LeftDockWidgetArea, cad);
-
-	QFont font;
-	font.setFamily("Courier");
-	font.setFixedPitch(true);
-	font.setPointSize(10);
-	cadEditor = new CodeEditor();
-	cadEditor->setFont(font);
-	cadEditor->setMinimumWidth(200);
-	cad->setWidget(cadEditor);
 }
 
 void OCCWindow::createActions(void)
@@ -299,8 +312,9 @@ void OCCWindow::on_action_make_box()
 	Handle(AIS_Shape) anAisBox = new AIS_Shape(aTopoBox);
 
 	MyPrimitive* anPrimCylinder = new MyBox(valWidth, valLength, valHeight);
+	anPrimCylinder->BindGraphicShape(anAisBox);
 
-	myOCCOpenGL->getHELM()->createShape(anAisBox, anPrimCylinder);
+	myOCCOpenGL->getHELM()->createShape(anPrimCylinder);
 
 	anAisBox->SetColor(Quantity_NOC_GOLD);
 
@@ -368,9 +382,10 @@ void OCCWindow::on_action_make_cylinder()
 	TopoDS_Shape aTopoCylinder = BRepPrimAPI_MakeCylinder(anAxis, valRadius, valHeight).Shape();
 	Handle(AIS_Shape) anAisCylinder = new AIS_Shape(aTopoCylinder);
 	
-	MyPrimitive* anPrimCylinder = new MyClinder(valRadius, valHeight);
+	MyPrimitive* anPrimCylinder = new MyCylinder(valRadius, valHeight);
+	anPrimCylinder->BindGraphicShape(anAisCylinder);
 
-	myOCCOpenGL->getHELM()->createShape(anAisCylinder, anPrimCylinder);
+	myOCCOpenGL->getHELM()->createShape(anPrimCylinder);
 
 	anAisCylinder->SetColor(Quantity_NOC_GOLD);
 	

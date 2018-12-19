@@ -12,16 +12,22 @@ void PHELM::loadMaterialLib()
 
 }
 
-void PHELM::createShape(const Handle(AIS_Shape)& shape, MyPrimitive* prim)
+void PHELM::createShape(MyPrimitive* prim)
 {
 	vecPrimitive.push_back(*prim);
-	mapAisShapeStr[shape] = getVarName();
+	
+	// AIS_Shape -> Variable Name
+	mapAisShapeStr[prim->getGraphicShape()] = getVarName();
 
+	// AIS_Shape -> MyPrimitive*
+	mapAisShapePrimtive[prim->getGraphicShape()] = prim;
+
+	const auto graphicShapeName = mapAisShapeStr[prim->getGraphicShape()];
 	std::string lineCodeForCAD;
 	if (prim->pType == PrimType::Box)
 	{
 		MyBox* boxPrim = static_cast<MyBox*>(prim);
-		lineCodeForCAD = "(box " + mapAisShapeStr[shape] + " " +
+		lineCodeForCAD = "(box " + graphicShapeName + " " +
 			std::to_string(boxPrim->length) + " " + 
 			std::to_string(boxPrim->width) + " " +
 			std::to_string(boxPrim->height) + ")";
@@ -31,8 +37,8 @@ void PHELM::createShape(const Handle(AIS_Shape)& shape, MyPrimitive* prim)
 	}
 	else if (prim->pType == PrimType::Cylinder)
 	{
-		MyClinder* boxPrim = static_cast<MyClinder*>(prim);
-		lineCodeForCAD = "(cylinder " + mapAisShapeStr[shape] + " " +
+		MyCylinder* boxPrim = static_cast<MyCylinder*>(prim);
+		lineCodeForCAD = "(cylinder " + graphicShapeName + " " +
 			std::to_string(boxPrim->radius) + " " +
 			std::to_string(boxPrim->height) + ")";
 

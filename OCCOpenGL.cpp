@@ -51,6 +51,8 @@ OCCOpenGL::OCCOpenGL(QWidget* parent )
     myRectBand(NULL),
 	interactiveMode(InterMode::Viewing)
 {
+	propertyWidget = new MyPropertyWidget(this);
+	
 	helm = new PHELM();
 
     // No Background
@@ -242,6 +244,12 @@ void OCCOpenGL::mouseReleaseEvent( QMouseEvent* theEvent )
 					behavior.SetFollowTranslation(Standard_True);
 					aManipulator->SetTransformBehavior(behavior);
 					aManipulator->Attach(selectedInteractiveObj);
+
+					// Property widget
+					Handle(AIS_Shape) selectedShape = Handle(AIS_Shape)::DownCast(aManipulator->Object());
+					MyPrimitive *selectedPrimtive = helm->getPrimitiveFromShape(selectedShape);
+					propertyWidget->WritePropertiesToPropWidget(selectedPrimtive);
+
 				}
 				myContext->NextSelected();
 			}

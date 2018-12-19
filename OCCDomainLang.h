@@ -159,7 +159,7 @@ signals:
 
 private:
 	const double CHOPSAW_WIDTH_MIN = 0.2;
-	const double CHOPSAW_WIDTH_MAX = 1.0;
-	const double CHOPSAW_HEIGHT = 1.0;
+	const double CHOPSAW_WIDTH_MAX = 0.8;
+	const double CHOPSAW_HEIGHT = 0.8;
 };
 

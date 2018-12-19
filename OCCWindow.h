@@ -11,9 +11,11 @@
 #include <memory>
 #include <exception>
 
-#include "highlighter.h"
-#include "codeeditor.h"
+#include "Highlighter.h"
+#include "CodeEditor.h"
 #include "OCCDomainLang.h"
+#include "PropertyWidget.h"
+
 
 class OCCOpenGL;
 
@@ -67,6 +69,7 @@ private:
 	QTextEdit *outputEditor;
 	Highlighter *highlighter;
 	OCCDomainLang *DSL;
+
 
 	// primitives
 	TopoDS_Shape aTopoBox;

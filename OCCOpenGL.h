@@ -10,6 +10,7 @@
 #include <AIS_Shape.hxx>
 
 #include "PHELM.h"
+#include "PropertyWidget.h"
 
 class QMenu;
 class QRubberBand;
@@ -43,6 +44,7 @@ public:
 
 	const Handle(AIS_InteractiveContext)& getContext() const;
 	PHELM* getHELM() { return helm; }
+	MyPropertyWidget* getPropertyWidget() { return propertyWidget; }
 	
 	void fuse_selected();
 
@@ -131,6 +133,9 @@ private:
 
 	// HELM 
 	PHELM *helm;
+
+	// PropertyWidget
+	MyPropertyWidget *propertyWidget;
 };
 
 #endif 

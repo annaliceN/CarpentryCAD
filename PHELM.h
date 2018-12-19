@@ -23,7 +23,7 @@ public:
 
 	void createShape(const Handle(AIS_Shape)& shape);
 
-	void createShape(const Handle(AIS_Shape)& shape, MyPrimitive* prim);
+	void createShape(MyPrimitive* prim);
 
 	void transformShape(const Handle(AIS_Shape)& shape, const gp_XYZ& transPart);
 
@@ -33,6 +33,8 @@ public:
 
 	void compileToHelm();
 
+	MyPrimitive* getPrimitiveFromShape(const Handle(AIS_Shape)& shape) { return mapAisShapePrimtive[shape]; };
+
 	std::string getVarName();
 
 signals:
@@ -40,6 +42,8 @@ signals:
 
 private:
 	std::map<Handle(AIS_Shape), std::string> mapAisShapeStr;
+
+	std::map<Handle(AIS_Shape), MyPrimitive*> mapAisShapePrimtive;
 
 	std::vector<Material> vecMaterial;
 

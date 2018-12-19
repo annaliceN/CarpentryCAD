@@ -9,7 +9,7 @@ Highlighter::Highlighter(QTextDocument *parent)
 	keywordFormat.setFontWeight(QFont::Bold);
 	QStringList keywordPatterns;
 	keywordPatterns << "\\blist\\b" << "\\bdrill\\b" << "\\bchop\\b"
-		<< "\\bblade\\b" <<"\\bdisplay\\b"
+		<< "\\bblade\\b" <<"\\bdisplay\\b" << "\\bcut\\b"
 		<< "\\bcylinder\\b" << "\\bbox\\b" << "\\btranslate\\b"
 		<< "\\bdouble\\b" << "\\benum\\b" << "\\bexplicit\\b"
 		<< "\\bfriend\\b" << "\\binline\\b" << "\\bint\\b"
