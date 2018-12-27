@@ -1,7 +1,7 @@
 #ifndef OCCWINDOW_H
 #define OCCWINDOW_H
 
-#include "ui_occQt.h"
+#include "ui_MainWindow.h"
 
 
 #include <TopoDS.hxx>
@@ -44,6 +44,8 @@ private slots:
 
 	void on_action_compile();
 
+	void on_action_make_lumber();
+
 	void on_action_make_box();
 
 	void on_action_make_cone();
@@ -55,17 +57,16 @@ private slots:
 	void on_action_fuse();
 
 	void on_action_cut();
-
-	void display_cad_code(std::string code);
-
+	
 	void on_action_compiler_hints(QString line);
+
+	void on_action_HELM_code(std::string helm);
 
 private:
     Ui::occQtClass ui;
 
 	OCCOpenGL* myOCCOpenGL;
 	CodeEditor *editor;
-	CodeEditor *cadEditor;
 	QTextEdit *outputEditor;
 	Highlighter *highlighter;
 	OCCDomainLang *DSL;

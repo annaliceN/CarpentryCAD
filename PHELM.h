@@ -6,6 +6,7 @@
 #include <unordered_map>
 
 #include <QObject>
+#include <QTreeWidgetItem>
 
 #include <AIS_Shape.hxx>
 
@@ -15,30 +16,30 @@
 class PHELM : public QObject{
 	Q_OBJECT
 public:
-	PHELM() {
+	PHELM(QWidget *parent = 0) {
 		curVarIndex = 0;
 	};
 
-	void loadMaterialLib();
+	void LoadMaterialLib();
 
-	void createShape(const Handle(AIS_Shape)& shape);
+	void CreateShape(const Handle(AIS_Shape)& shape);
 
-	void createShape(MyPrimitive* prim);
+	void AssignCreatedShape(MyPrimitive* prim);
 
-	void transformShape(const Handle(AIS_Shape)& shape, const gp_XYZ& transPart);
+	void TransformShape(const Handle(AIS_Shape)& shape, const gp_XYZ& transPart);
 
-	void fuseTwoShapes(const Handle(AIS_Shape)& shapeA, const Handle(AIS_Shape)& shapeB);
+	void FuseTwoShapes(const Handle(AIS_Shape)& shapeA, const Handle(AIS_Shape)& shapeB);
 
-	void intersectAwithB(const Handle(AIS_Shape)& shapeA, const Handle(AIS_Shape)& shapeB, const Handle(AIS_Shape)& shapeInt);
+	void IntersectAwithB(const Handle(AIS_Shape)& shapeA, const Handle(AIS_Shape)& shapeB, const Handle(AIS_Shape)& shapeInt);
 
-	void compileToHelm();
+	void CompileToHelm();
 
 	MyPrimitive* getPrimitiveFromShape(const Handle(AIS_Shape)& shape) { return mapAisShapePrimtive[shape]; };
 
 	std::string getVarName();
 
 signals:
-	void add_cad_code(std::string line);
+	void sigAppendHELMCode(std::string line);
 
 private:
 	std::map<Handle(AIS_Shape), std::string> mapAisShapeStr;

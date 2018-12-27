@@ -66,9 +66,9 @@
 bool show_err1_flag = true;
 bool show_err2_flag = true;
 
-MyPrimitive::MyPrimitive(const TopoDS_Shape& _shape) { 
-	shape = _shape; 
-
+MyPrimitive::MyPrimitive(const TopoDS_Shape& _shape) 
+{ 
+	baseShape = _shape; 
 };
 
 MyPrimitive* make_box(double W, double H, double L)
@@ -83,10 +83,10 @@ MyPrimitive* make_cylinder(double R, double H)
 
 void translate_prmt(MyPrimitive* p, double x, double y, double z)
 {
-	gp_Trsf aTrsf;
-	aTrsf.SetTranslation(gp_Vec(x, y, z));
-	BRepBuilderAPI_Transform aTransform(p->shape, aTrsf);
-	p->shape = aTransform.Shape();
+// 	gp_Trsf aTrsf;
+// 	aTrsf.SetTranslation(gp_Vec(x, y, z));
+// 	BRepBuilderAPI_Transform aTransform(p->shape, aTrsf);
+// 	p->shape = aTransform.Shape();
 }
 
 template < class T>
@@ -322,7 +322,7 @@ std::string OCCDomainLang::eval(PList &pp, Environment &env)
 				
 				env[name] = Object(creatingPrimitive);
 
-				for (TopExp_Explorer faceExplorer(creatingPrimitive->shape, TopAbs_FACE); faceExplorer.More(); faceExplorer.Next())
+				for (TopExp_Explorer faceExplorer(creatingPrimitive->getShape(), TopAbs_FACE); faceExplorer.More(); faceExplorer.Next())
 				{
 					// get current face and convert to TopoDS_Face
 					const TopoDS_Face& face = TopoDS::Face(faceExplorer.Current());
@@ -403,11 +403,11 @@ std::string OCCDomainLang::eval(PList &pp, Environment &env)
 				Handle(Geom_Surface) TS = new Geom_RectangularTrimmedSurface(S, -50, 50, false);
 				TopoDS_Face F = BRepBuilderAPI_MakeFace(TS, 1.0);
 				GEOMAlgo_Splitter splitter;
-				splitter.AddArgument(pmt->shape);
+				splitter.AddArgument(pmt->getShape());
 				splitter.AddTool(F);
 				splitter.Perform();
 				//creatingPrimitive->shape = splitter.Shape();
-				TopTools_ListIteratorOfListOfShape iter(splitter.Modified(pmt->shape));
+				TopTools_ListIteratorOfListOfShape iter(splitter.Modified(pmt->getShape()));
 
 				MyPrimitive* candPmt[2];
 				for (int cnt = 0; iter.More() && cnt < 2; iter.Next(), ++cnt)
@@ -450,7 +450,7 @@ std::string OCCDomainLang::eval(PList &pp, Environment &env)
 				std::vector<std::pair<TopoDS_Face, gp_Dir>> candidateFaces;
 
 				// Define the tool
-				for (TopExp_Explorer faceExplorer(pmt->shape, TopAbs_FACE); faceExplorer.More(); faceExplorer.Next())
+				for (TopExp_Explorer faceExplorer(pmt->getShape(), TopAbs_FACE); faceExplorer.More(); faceExplorer.Next())
 				{
 					// get current face and convert to TopoDS_Face
 					const TopoDS_Face& face = TopoDS::Face(faceExplorer.Current());
@@ -536,12 +536,12 @@ std::string OCCDomainLang::eval(PList &pp, Environment &env)
 
 				std::cout << "cut" << std::endl;
 				GEOMAlgo_Splitter splitter;
-				splitter.AddArgument(pmt->shape);
+				splitter.AddArgument(pmt->getShape());
 				splitter.AddTool(F);
 				splitter.Perform();
-				TopTools_ListIteratorOfListOfShape iter(splitter.Modified(pmt->shape));
+				TopTools_ListIteratorOfListOfShape iter(splitter.Modified(pmt->getShape()));
 
-				std::cout << splitter.Modified(pmt->shape).Size() << std::endl;
+				std::cout << splitter.Modified(pmt->getShape()).Size() << std::endl;
 				
 				MyPrimitive* candPmt[2];
 				for (int cnt = 0; iter.More() && cnt < 2; iter.Next(), ++cnt)

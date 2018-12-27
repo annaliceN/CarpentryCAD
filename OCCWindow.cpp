@@ -64,7 +64,7 @@ std::vector<Handle(AIS_Shape)> convert_to_AIS_shape(std::unordered_set<T>& shape
 
 	for (const typename T& s : shapes)
 	{
-		Handle(AIS_Shape) anAisSphere = new AIS_Shape(s->shape);
+		Handle(AIS_Shape) anAisSphere = new AIS_Shape(s->getShape());
 
 		anAisSphere->SetColor(Quantity_NOC_GOLD);
 
@@ -131,20 +131,17 @@ void OCCWindow::intialize_widget()
 	propertyWidget->ui.tableWidget->horizontalHeader()->setStretchLastSection(true);
 	propertyWidget->ui.tableWidget->setHorizontalHeaderLabels(columnNames);
 	propertyWidget->setMinimumWidth(400);
+	propertyWidget->setMaximumWidth(400);
 	addDockWidget(Qt::RightDockWidgetArea, propertyWidget);
 
-	QDockWidget *cad = new QDockWidget(tr("CAD Operations"), this);
+	// CAD OPERATIONS
+	//QDockWidget *cad = new QDockWidget(tr("CAD Operations"), this);
+	MyObjectWidget *cad = myOCCOpenGL->getObjectWidget();
+	cad->setMinimumHeight(240);
 	cad->setAllowedAreas(Qt::LeftDockWidgetArea);
 	addDockWidget(Qt::LeftDockWidgetArea, cad);
 
-	QFont font;
-	font.setFamily("Courier");
-	font.setFixedPitch(true);
-	font.setPointSize(10);
-	cadEditor = new CodeEditor();
-	cadEditor->setFont(font);
-	cadEditor->setMinimumWidth(200);
-	cad->setWidget(cadEditor);
+
 
 	QDockWidget *sr = new QDockWidget(tr("HELM Code"), this);
 	sr->setFeatures(QDockWidget::DockWidgetMovable | QDockWidget::DockWidgetClosable);
@@ -199,6 +196,7 @@ void OCCWindow::createActions(void)
 	connect(ui.actionCone, SIGNAL(triggered()), this, SLOT(on_action_make_cone()));
 	connect(ui.actionSphere, SIGNAL(triggered()), this, SLOT(on_action_make_sphere()));
 	connect(ui.actionCylinder, SIGNAL(triggered()), this, SLOT(on_action_make_cylinder()));
+	connect(ui.actionLumber, SIGNAL(triggered()), this, SLOT(on_action_make_lumber()));
 
 	// operations
 	connect(ui.actionFuse, SIGNAL(triggered()), this, SLOT(on_action_fuse()));
@@ -209,15 +207,11 @@ void OCCWindow::createActions(void)
 
 	connect(ui.actionHelix, SIGNAL(triggered()), this, SLOT(on_action_compile()));
 
-	connect(myOCCOpenGL->getHELM(), SIGNAL(add_cad_code(std::string)), this, SLOT(display_cad_code(std::string)));
+	connect(myOCCOpenGL->getHELM(), SIGNAL(sigAppendHELMCode(std::string)), this, SLOT(on_action_HELM_code(std::string)));
 
 	connect(DSL, SIGNAL(compiler_hints(QString)), this, SLOT(on_action_compiler_hints(QString)));
 }
 
-void OCCWindow::display_cad_code(std::string code)
-{
-	cadEditor->appendPlainText(QString(code.c_str()));
-}
 
 void OCCWindow::on_action_compiler_hints(QString line)
 {
@@ -245,11 +239,13 @@ void OCCWindow::createToolBars(void)
 	aToolBar = addToolBar(tr("&Primitive"));
 	aToolBar->setStyleSheet("QToolBar {background: rgb(255, 255, 255)}");
 	aToolBar->addSeparator();
+	aToolBar->addAction(ui.actionLumber);
 	aToolBar->addAction(ui.actionBox);
 	aToolBar->addAction(ui.actionCone);
 	aToolBar->addAction(ui.actionSphere);
 	aToolBar->addAction(ui.actionCylinder);
 
+	aToolBar->addSeparator();
 	aToolBar->addAction(ui.actionFuse);
 	aToolBar->addAction(ui.actionCut);
 
@@ -272,6 +268,23 @@ void OCCWindow::outputResult(const QString& res)
 	QDateTime date = QDateTime::currentDateTime();
 	QString authDate = date.toString("[yyyy-MM-d hh:mm:ss]: ");
 	outputEditor->append(authDate + res);
+}
+
+void OCCWindow::on_action_make_lumber()
+{
+	double valWidth, valLength, valHeight;
+	MyLumber* anPrimLumber = new MyLumber(MyLumber::StandardLumber::TWOBYFOUR, 1.0);
+
+	TopoDS_Shape aTopoBox = BRepPrimAPI_MakeBox(anPrimLumber->width, anPrimLumber->height, anPrimLumber->length).Shape();
+	Handle(AIS_Shape) anAisBox = new AIS_Shape(aTopoBox);
+
+	anPrimLumber->BindGraphicShape(anAisBox);
+
+	myOCCOpenGL->CreateShape(anPrimLumber);
+
+	anAisBox->SetColor(Quantity_NOC_GOLD);
+
+	myOCCOpenGL->getContext()->Display(anAisBox, Standard_True);
 }
 
 void OCCWindow::on_action_make_box()
@@ -314,7 +327,7 @@ void OCCWindow::on_action_make_box()
 	MyPrimitive* anPrimCylinder = new MyBox(valWidth, valLength, valHeight);
 	anPrimCylinder->BindGraphicShape(anAisBox);
 
-	myOCCOpenGL->getHELM()->createShape(anPrimCylinder);
+	myOCCOpenGL->CreateShape(anPrimCylinder);
 
 	anAisBox->SetColor(Quantity_NOC_GOLD);
 
@@ -385,8 +398,8 @@ void OCCWindow::on_action_make_cylinder()
 	MyPrimitive* anPrimCylinder = new MyCylinder(valRadius, valHeight);
 	anPrimCylinder->BindGraphicShape(anAisCylinder);
 
-	myOCCOpenGL->getHELM()->createShape(anPrimCylinder);
-
+	myOCCOpenGL->CreateShape(anPrimCylinder);
+	
 	anAisCylinder->SetColor(Quantity_NOC_GOLD);
 	
 	myOCCOpenGL->getContext()->Display(anAisCylinder, Standard_True);
@@ -394,12 +407,12 @@ void OCCWindow::on_action_make_cylinder()
 
 void OCCWindow::on_action_fuse()
 {
-	myOCCOpenGL->fuse_selected();
+	myOCCOpenGL->FuseSelected();
 }
 
 void OCCWindow::on_action_cut()
 {
-	myOCCOpenGL->intersect_selected();
+	myOCCOpenGL->IntersectSelected();
 }
 
 void OCCWindow::on_action_compile()
@@ -430,4 +443,9 @@ void OCCWindow::on_action_compile()
 		myOCCOpenGL->getContext()->Display(s, Standard_True);
 	}
 
+}
+
+void OCCWindow::on_action_HELM_code(std::string helm)
+{
+	editor->appendPlainText(QString(helm.c_str()));
 }

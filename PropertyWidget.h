@@ -27,6 +27,8 @@ signals:
 	void VisibilityChangeSignal(void*);
 	void NormalDirectionChangeSignal(MyPrimitive*);
 	void MetalTypeChangeSignal(MyPrimitive*);
+	void sigLumberLengthChanged(MyLumber*, double);
+	void sigRedraw(void);
 
 public slots:
 	void WritePropertiesToPropWidget(MyPrimitive* primitive);
@@ -35,7 +37,7 @@ public slots:
 	void ShowColorSelection();
 	void VisibilityChange(int state);
 	void NormalDirectionChange(int idx);
-	void MetalTypeChange(int idx);
+	void LumberTypeChange(int idx);
 	void Clear();
 	void onLengthChanged(int length);
 
@@ -51,12 +53,13 @@ private:
 	// 	void WriteSphereProperties(MySphere* sphere);
 	// 	void WriteTorusProperties(MyTorus* torus);
 	// 	void WritePartialTorusProperties(MyPartialTorus* torus);
+	void WriteLumberProperties(MyLumber* lumber);
 	void WriteBoxProperties(MyBox* box);
 
 	QPushButton* GenColorButton(Eigen::Vector3d color);
 	QCheckBox* GenCheckBox(bool checked);
 	QComboBox* GenComboBox(bool outer);
-	QComboBox* GenMetalComboBox(std::string metalType);
+	QComboBox* GenLumberComboBox(std::string metalType);
 
 public:
 	Ui::PropertyWidget ui;
@@ -66,6 +69,6 @@ public:
 	QCheckBox *currentCheckBox;
 	QComboBox *currentComboBox;
 	MyPrimitive *curPrimitive;
-	std::list< std::pair<std::string, double> > metalList;
+	std::vector< std::string > lumberList;
 };
 #endif

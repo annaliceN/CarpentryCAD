@@ -14,6 +14,7 @@
 #include <BRepAlgoAPI_Fuse.hxx>
 #include <BRepAlgoAPI_Cut.hxx>
 #include <BRepBuilderAPI_Transform.hxx>
+#include <BRepBuilderAPI_GTransform.hxx>
 
 
 #ifdef WNT
@@ -52,8 +53,8 @@ OCCOpenGL::OCCOpenGL(QWidget* parent )
 	interactiveMode(InterMode::Viewing)
 {
 	propertyWidget = new MyPropertyWidget(this);
-	
-	helm = new PHELM();
+	objectWidget = new MyObjectWidget(this);
+	helm = new PHELM(this);
 
     // No Background
     setBackgroundRole( QPalette::NoRole );
@@ -120,12 +121,16 @@ void OCCOpenGL::init()
 	aManipulator = new AIS_Manipulator();
 	//aManipulator->SetPart(1, AIS_ManipulatorMode::AIS_MM_Rotation, Standard_False);
 	aManipulator->SetModeActivationOnDetection(Standard_True);
+	
+	
+	
 
 }
 
-const Handle(AIS_InteractiveContext)& OCCOpenGL::getContext() const
+void OCCOpenGL::ApplyConnections()
 {
-    return myContext;
+	//connect(helm, SIGNAL(CreateObject(std::string)), this, SLOT(display_cad_code(std::string)));
+
 }
 
 void OCCOpenGL::paintEvent( QPaintEvent* /*theEvent*/ )
@@ -248,7 +253,9 @@ void OCCOpenGL::mouseReleaseEvent( QMouseEvent* theEvent )
 					// Property widget
 					Handle(AIS_Shape) selectedShape = Handle(AIS_Shape)::DownCast(aManipulator->Object());
 					MyPrimitive *selectedPrimtive = helm->getPrimitiveFromShape(selectedShape);
-					propertyWidget->WritePropertiesToPropWidget(selectedPrimtive);
+
+					if (selectedPrimtive != nullptr)
+						propertyWidget->WritePropertiesToPropWidget(selectedPrimtive);
 
 				}
 				myContext->NextSelected();
@@ -258,12 +265,12 @@ void OCCOpenGL::mouseReleaseEvent( QMouseEvent* theEvent )
 			interactiveMode = InterMode::Manipulating;
 		}
 
+		// Exit selection mode
 		if (numSelected == 0 && interactiveMode == InterMode::Manipulating)
 		{
 			interactiveMode = InterMode::Viewing;
-			
-			// Update internal model
-			
+
+			propertyWidget->Clear();
 			aManipulator->Detach();
 			aManipulator->SetModeActivationOnDetection(Standard_True);
 			myView->Redraw();
@@ -271,18 +278,24 @@ void OCCOpenGL::mouseReleaseEvent( QMouseEvent* theEvent )
 
 		if (numSelected == 1 && interactiveMode == InterMode::Manipulating && aManipulator->HasActiveTransformation())
 		{
-			{
-				Handle(AIS_Shape) selectedShape = Handle(AIS_Shape)::DownCast(aManipulator->Object());
-				std::cout << aManipulator->IsModeActivationOnDetection() << std::endl;
-				BRepBuilderAPI_Transform trsf(selectedShape->Shape(), manipulatorTrsf);
-				
-				auto updatedShape = trsf.Shape();
-				selectedShape->Set(updatedShape);
+			Handle(AIS_Shape) selectedShape = Handle(AIS_Shape)::DownCast(aManipulator->Object());
+			std::cout << aManipulator->IsModeActivationOnDetection() << std::endl;
 
-				// TODO: Get full transformation
-				gp_XYZ transPart = manipulatorTrsf.TranslationPart();
-				helm->transformShape(selectedShape, transPart);
-			}
+			//manipulatorTrsf = aManipulator->Object()->Transformation();
+			BRepBuilderAPI_Transform trsf(selectedShape->Shape(), manipulatorTrsf);
+
+			auto updatedShape = trsf.Shape();
+			selectedShape->Set(updatedShape);
+
+			// TODO: Get full transformation
+			QString primName = "Translation";
+			QIcon primitiveIcon(":/Resources/manipulate.png");
+			QTreeWidget *treeWidget = objectWidget->ui.treeWidget;
+			QTreeWidgetItem *primitiveItem = new QTreeWidgetItem(treeWidget, QStringList(primName));
+			primitiveItem->setIcon(0, primitiveIcon);
+
+			gp_XYZ transPart = manipulatorTrsf.TranslationPart();
+			helm->TransformShape(selectedShape, transPart);
 
 			aManipulator->StopTransform(Standard_True);
 			aManipulator->SetModeActivationOnDetection(Standard_True);
@@ -588,7 +601,7 @@ void OCCOpenGL::panByMiddleButton( const QPoint& thePoint )
 }
 
 
-void OCCOpenGL::fuse_selected()
+void OCCOpenGL::FuseSelected()
 {
 	if (vecShapes.size() != 2) return;
 
@@ -609,7 +622,7 @@ void OCCOpenGL::fuse_selected()
 
 }
 
-void OCCOpenGL::intersect_selected()
+void OCCOpenGL::IntersectSelected()
 {
 	if (vecShapes.size() != 2) return;
 
@@ -627,6 +640,85 @@ void OCCOpenGL::intersect_selected()
 		myContext->Remove(vecShapes[1], Standard_True);
 		myContext->Display(intersectedSahpe, Standard_True);
 
-		helm->intersectAwithB(shapeA, shapeB, intersectedSahpe);
+		helm->IntersectAwithB(shapeA, shapeB, intersectedSahpe);
 	}
+}
+
+void OCCOpenGL::objSelected()
+{
+	QList<QTreeWidgetItem*> iterList = objectWidget->ui.treeWidget->selectedItems();
+	bool noRealPrimitiveSelected = true;
+	for (auto iter = iterList.begin(); iter != iterList.end(); ++iter)
+	{
+		if (!objMapping[*iter]) continue;
+		noRealPrimitiveSelected = false;
+		break;
+	}
+	
+}
+
+void OCCOpenGL::CreateShape(MyPrimitive* prim)
+{
+	if (prim == nullptr) return;
+
+	QString primName;
+	QIcon primitiveIcon;
+
+	switch (prim->pType)
+	{
+	case PrimType::Lumber:
+		primName = "Create Lumber";
+		primitiveIcon.addFile(":/Resources/lumber.png");
+		break;
+	case PrimType::Box:
+		primName = "Box";
+		primitiveIcon.addFile(":/Resources/cube_crop.png");
+		break;
+	case PrimType::Cylinder:
+		primName = "Cylinder";
+		primitiveIcon.addFile(":/Resources/cylinder_crop.png");
+		break;
+	}
+
+	QTreeWidget *treeWidget = objectWidget->ui.treeWidget;
+	QTreeWidgetItem *primitiveItem = new QTreeWidgetItem(treeWidget, QStringList(primName));
+
+	primitiveItem->setIcon(0, primitiveIcon);
+//	primitive->setCheckState(0, Qt::Checked);
+
+//	objMapping[prim] = prim;
+
+	helm->AssignCreatedShape(prim);
+}
+
+void OCCOpenGL::onLumberLengthChanged(MyLumber* lumber, double length)
+{
+	AIS_ListOfInteractive listOfInteractive;
+	myContext->DisplayedObjects(listOfInteractive);
+	AIS_ListIteratorOfListOfInteractive iter(listOfInteractive);
+	for (; iter.More(); iter.Next())
+	{
+		Handle(AIS_InteractiveObject) firstInterObj = iter.Value();
+		if (lumber->getGraphicShape() == Handle(AIS_Shape)::DownCast(firstInterObj))
+		{
+			double scaleRatio = length;
+			gp_GTrsf scaleTrsf  = gp_GTrsf();
+			gp_Mat rot(1.0, 0, 0, 0, 1.0, 0, 0, 0, length);
+			scaleTrsf.SetVectorialPart(rot);
+			//scaleTrsf.SetValue(3, 3, scaleRatio);
+
+			BRepBuilderAPI_GTransform trsf(lumber->baseShape, scaleTrsf);
+			auto updatedShape = trsf.Shape();
+
+			lumber->getGraphicShape()->Set(updatedShape);
+			lumber->getGraphicShape()->Redisplay(Standard_True);
+ 			myView->Redraw();
+		}
+	}
+
+}
+
+void OCCOpenGL::Redraw(void) 
+{
+	myView->Redraw();
 }

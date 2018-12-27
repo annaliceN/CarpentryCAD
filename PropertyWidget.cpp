@@ -16,15 +16,20 @@ MyPropertyWidget::MyPropertyWidget(QWidget *parent /* = 0 */)
 
 	connect(this, SIGNAL(VisibilityChangeSignal(void*)), parent, SLOT(primitiveVisibilityChanged(void*)));
 	connect(this, SIGNAL(NormalDirectionChangeSignal(MyPrimitive*)), parent, SLOT(primitiveNormalChanged(MyPrimitive*)));
-	connect(this, SIGNAL(MetalTypeChangeSignal(MyPrimitive*)), parent, SLOT(primitiveMetalTypeChanged(MyPrimitive*)));
+	connect(this, SIGNAL(LumberTypeChangeSignal(MyPrimitive*)), parent, SLOT(primitiveMetalTypeChanged(MyPrimitive*)));
+	connect(this, SIGNAL(sigRedraw()), parent, SLOT(Redraw()));
+	connect(this, SIGNAL(sigLumberLengthChanged(MyLumber*, double)), parent, SLOT(onLumberLengthChanged(MyLumber*, double)));
 
 	currentButton = NULL;
 	currentCheckBox = NULL;
 	curPrimitive = NULL;
 
-	metalList.push_back(make_pair("Steel", 7.85));
-	metalList.push_back(make_pair("Aluminum", 2.70));
-	metalList.push_back(make_pair("Cast Iron", 7.90));
+	// Load lumber library
+	lumberList.push_back("1 x 2");
+	lumberList.push_back("2 x 2");
+	lumberList.push_back("1 x 4");
+	lumberList.push_back("2 x 4");
+	lumberList.push_back("2 x 6");
 }
 
 MyPropertyWidget::~MyPropertyWidget()
@@ -40,10 +45,13 @@ void MyPropertyWidget::WritePropertiesToPropWidget(MyPrimitive* primitive)
 	switch (primitive->getPrimitiveType())
 	{
 	case PrimType::Box:
-		WriteBoxProperties((MyBox*)primitive);
+		WriteBoxProperties(static_cast<MyBox*>(primitive));
 		break;
 	case PrimType::Cylinder:
-		//WriteCylinderProperties((MyCylinder*)primitive);
+		//WriteCylinderProperties(static_cast<MyCylinder*>(primitive));
+		break;
+	case PrimType::Lumber:
+		WriteLumberProperties(static_cast<MyLumber*>(primitive));
 		break;
 // 	case MyPrimitive::PRIMITIVETYPE::PARTIALCYLINDER:
 // 		WritePartialCylinderProperties((MyPartialCylinder*)primitive);
@@ -108,12 +116,13 @@ void MyPropertyWidget::NormalDirectionChange(int idx)
 // 	emit NormalDirectionChangeSignal(curPrimitive);
 }
 
-void MyPropertyWidget::MetalTypeChange(int idx)
+void MyPropertyWidget::LumberTypeChange(int idx)
 {
-// 	auto iter = metalList.begin();
-// 	for (int i = 0; i < idx; ++i) ++iter;
-// 	curPrimitive->metalType = *iter;
-// 	emit MetalTypeChangeSignal(curPrimitive);
+	std::cout << "type change" << std::endl;
+	auto curLumber = static_cast<MyLumber*>(curPrimitive);
+	curLumber->AssignStandard(static_cast<MyLumber::StandardLumber>(idx));
+	curLumber->UpdateStandard();
+	emit sigRedraw();
 }
 
 void MyPropertyWidget::Clear()
@@ -222,6 +231,68 @@ void MyPropertyWidget::UpdateBoxProperties(MyBox* box)
 	InsertItem(tableWidgetItem, 4, 1);
 }
 
+void MyPropertyWidget::WriteLumberProperties(MyLumber *lumber)
+{
+	QTableWidget *tableWidget = ui.tableWidget;
+	tableWidget->setRowCount(13);
+
+	QTableWidgetItem *tableWidgetItem = new QTableWidgetItem("Parameters");
+	InsertMergeRow(tableWidgetItem, 0);
+
+	tableWidgetItem = new QTableWidgetItem("Center");
+	InsertItem(tableWidgetItem, 1, 0);
+	Eigen::Vector3d axis = lumber->getPosition();
+	tableWidgetItem = new QTableWidgetItem(("(" + std::to_string(axis.x()) + ", " +
+		std::to_string(axis.y()) + ", " + std::to_string(axis.z()) + ")").c_str());
+	InsertItem(tableWidgetItem, 1, 1);
+
+	tableWidgetItem = new QTableWidgetItem("Width");
+	InsertItem(tableWidgetItem, 2, 0);
+	tableWidgetItem = new QTableWidgetItem(std::to_string(lumber->width).c_str());
+	InsertItem(tableWidgetItem, 2, 1);
+
+	tableWidgetItem = new QTableWidgetItem("Height");
+	InsertItem(tableWidgetItem, 3, 0);
+	tableWidgetItem = new QTableWidgetItem(std::to_string(lumber->height).c_str());
+	InsertItem(tableWidgetItem, 3, 1);
+
+	tableWidgetItem = new QTableWidgetItem("Length");
+	InsertItem(tableWidgetItem, 4, 0);
+	tableWidgetItem = new QTableWidgetItem(std::to_string(lumber->length).c_str());
+	InsertItem(tableWidgetItem, 4, 1);
+
+	// 	QPushButton *colorPalet = GenColorButton(box->GetColor());
+	// 	tableWidget->setCellWidget(6, 1, colorPalet);
+	// 	tableWidgetItem = new QTableWidgetItem("Visible");
+	// 	InsertItem(tableWidgetItem, 7, 0);
+	// 	QCheckBox *checkBox = GenCheckBox(box->isVisible);
+	// 	tableWidget->setCellWidget(7, 1, checkBox);
+
+	tableWidgetItem = new QTableWidgetItem("Length");
+	InsertItem(tableWidgetItem, 5, 0);
+	QSlider *slider = new QSlider(Qt::Horizontal);
+
+	slider->setMaximum(100);
+	slider->setMinimum(1);
+	slider->setValue(lumber->length / (lumber->maxLength - lumber->minLength) * 100.0);
+
+	tableWidget->setCellWidget(5, 1, slider);
+	connect(slider, SIGNAL(valueChanged(int)), this, SLOT(onLengthChanged(int)));
+
+	tableWidgetItem = new QTableWidgetItem("Material");
+	InsertMergeRow(tableWidgetItem, 9);
+	tableWidgetItem = new QTableWidgetItem("Lumber Type");
+	InsertItem(tableWidgetItem, 10, 0);
+	auto comboBox = GenLumberComboBox(lumberList[lumber->lumberType]);
+	tableWidget->setCellWidget(10, 1, comboBox);
+	tableWidgetItem = new QTableWidgetItem("Volume");
+	InsertItem(tableWidgetItem, 11, 0);
+	tableWidgetItem = new QTableWidgetItem(std::to_string(lumber->getVolume()).c_str());
+	InsertItem(tableWidgetItem, 11, 1);
+	tableWidgetItem = new QTableWidgetItem("Mass");
+	InsertItem(tableWidgetItem, 12, 0);
+}
+
 void MyPropertyWidget::WriteBoxProperties(MyBox* box)
 {
 	QTableWidget *tableWidget = ui.tableWidget;
@@ -262,12 +333,13 @@ void MyPropertyWidget::WriteBoxProperties(MyBox* box)
 	tableWidgetItem = new QTableWidgetItem("Length");
 	InsertItem(tableWidgetItem, 5, 0);
 	QSlider *slider = new QSlider(Qt::Horizontal);
+
 	tableWidget->setCellWidget(5, 1, slider);
 	connect(slider, SIGNAL(valueChanged(int)), this, SLOT(onLengthChanged(int)));
 
 	tableWidgetItem = new QTableWidgetItem("Material");
 	InsertMergeRow(tableWidgetItem, 9);
-	tableWidgetItem = new QTableWidgetItem("Metal Type");
+	tableWidgetItem = new QTableWidgetItem("Lumber");
 	InsertItem(tableWidgetItem, 10, 0);
 	tableWidgetItem = new QTableWidgetItem("Volume");
 	InsertItem(tableWidgetItem, 11, 0);
@@ -279,7 +351,12 @@ void MyPropertyWidget::WriteBoxProperties(MyBox* box)
 
 void MyPropertyWidget::onLengthChanged(int length)
 {
-	std::cout << "hello" << std::endl;
+	MyLumber *curLumber = static_cast<MyLumber*>(curPrimitive);
+	double newLength = length / 100.0 * (curLumber->maxLength - curLumber->minLength);
+	curLumber->length = newLength;
+	ui.tableWidget->item(4, 1)->setText(std::to_string(curLumber->length).c_str());
+	
+	emit sigLumberLengthChanged(curLumber, newLength);
 }
 
 QPushButton* MyPropertyWidget::GenColorButton(Eigen::Vector3d color)
@@ -313,18 +390,18 @@ QComboBox* MyPropertyWidget::GenComboBox(bool outer)
 	return currentComboBox;
 }
 
-QComboBox* MyPropertyWidget::GenMetalComboBox(std::string metalType)
+QComboBox* MyPropertyWidget::GenLumberComboBox(std::string metalType)
 {
 	currentComboBox = new QComboBox();
 	int initialIndex = -1, iterCnt = 0;
-	for (auto iter = metalList.begin(); iter != metalList.end(); ++iter)
+	for (auto iter = lumberList.begin(); iter != lumberList.end(); ++iter)
 	{
-		currentComboBox->addItem(iter->first.c_str());
-		if (iter->first == metalType) initialIndex = iterCnt;
+		currentComboBox->addItem(iter->c_str());
+		if (*iter == metalType) initialIndex = iterCnt;
 		++iterCnt;
 	}
 	currentComboBox->setCurrentIndex(initialIndex);
 
-	connect(currentComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(MetalTypeChange(int)));
+	connect(currentComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(LumberTypeChange(int)));
 	return currentComboBox;
 }

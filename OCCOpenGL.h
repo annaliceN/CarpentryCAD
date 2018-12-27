@@ -11,6 +11,7 @@
 
 #include "PHELM.h"
 #include "PropertyWidget.h"
+#include "ObjectWidget.h"
 
 class QMenu;
 class QRubberBand;
@@ -42,24 +43,29 @@ public:
     //! constructor.
 	OCCOpenGL(QWidget* parent);
 
-	const Handle(AIS_InteractiveContext)& getContext() const;
-	PHELM* getHELM() { return helm; }
-	MyPropertyWidget* getPropertyWidget() { return propertyWidget; }
-	
-	void fuse_selected();
+	// Get created objects
+	const Handle(AIS_InteractiveContext)& getContext() const { return myContext; };
+	PHELM* getHELM() { return helm; };
+	MyPropertyWidget* getPropertyWidget() { return propertyWidget; };
+	MyObjectWidget* getObjectWidget() { return objectWidget; };
 
-	void intersect_selected();
+	// Geometric operations
+	void FuseSelected();
+	void IntersectSelected();
 
 signals:
     void selectionChanged(void);
 
 public slots:
-    //! operations for the view.
     void pan(void);
     void fitAll(void);
     void reset(void);
     void zoom(void);
-    void rotate(void);
+	void rotate(void);
+	void objSelected();
+	void onLumberLengthChanged(MyLumber*, double);
+	void Redraw(void);
+	void CreateShape(MyPrimitive * prim);
 
 protected:
     // Paint events.
@@ -87,6 +93,7 @@ protected:
 
 protected:
     void init(void);
+	void ApplyConnections();
     void popup(const int x, const int y);
     void dragEvent(const int x, const int y);
     void inputEvent(const int x, const int y);
@@ -136,6 +143,9 @@ private:
 
 	// PropertyWidget
 	MyPropertyWidget *propertyWidget;
+	MyObjectWidget *objectWidget;
+
+	std::unordered_map< QTreeWidgetItem*, void* > objMapping;
 };
 
 #endif 
