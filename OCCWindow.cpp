@@ -57,6 +57,8 @@
 
 #include <gp_Trsf.hxx>
 
+#include "FeatureBox.h"
+
 template <typename T>
 std::vector<Handle(AIS_Shape)> convert_to_AIS_shape(std::unordered_set<T>& shapes)
 {
@@ -208,6 +210,7 @@ void OCCWindow::createActions(void)
 	connect(ui.actionHelix, SIGNAL(triggered()), this, SLOT(on_action_compile()));
 
 	connect(myOCCOpenGL->getHELM(), SIGNAL(sigAppendHELMCode(std::string)), this, SLOT(on_action_HELM_code(std::string)));
+	connect(myOCCOpenGL->getHELM(), SIGNAL(sigReplaceHELMCode(QString)), this, SLOT(on_action_HELM_code(QString)));
 
 	connect(DSL, SIGNAL(compiler_hints(QString)), this, SLOT(on_action_compiler_hints(QString)));
 }
@@ -280,7 +283,7 @@ void OCCWindow::on_action_make_lumber()
 
 	anPrimLumber->BindGraphicShape(anAisBox);
 
-	myOCCOpenGL->CreateShape(anPrimLumber);
+	//myOCCOpenGL->CreateShape(anPrimLumber);
 
 	anAisBox->SetColor(Quantity_NOC_GOLD);
 
@@ -289,49 +292,12 @@ void OCCWindow::on_action_make_lumber()
 
 void OCCWindow::on_action_make_box()
 {
-	QDialog * d = new QDialog();
-	QVBoxLayout * vbox = new QVBoxLayout();
-
-	QDoubleSpinBox * widthBox = new QDoubleSpinBox();
-	widthBox->setValue(1.0);
-	QDoubleSpinBox * lengthBox = new QDoubleSpinBox();
-	lengthBox->setValue(1.0);
-	QDoubleSpinBox * heightBox = new QDoubleSpinBox();
-	heightBox->setValue(1.0);
-	QDialogButtonBox * buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok
-		| QDialogButtonBox::Cancel);
-	QObject::connect(buttonBox, SIGNAL(accepted()), d, SLOT(accept()));
-	QObject::connect(buttonBox, SIGNAL(rejected()), d, SLOT(reject()));
-
-	vbox->addWidget(widthBox);
-	vbox->addWidget(lengthBox);
-	vbox->addWidget(heightBox);
-	vbox->addWidget(buttonBox);
-
-	d->setLayout(vbox);
-
-	int result = d->exec();
-	double valWidth, valLength, valHeight;
+	Part::FeatureBox* box = new Part::FeatureBox;
+	Handle(AIS_Shape) boxShape = box->BuildGraphicShape();
 	
-	if (result == QDialog::Accepted)
-	{
-		valWidth = widthBox->value();
-		valHeight = heightBox->value();
-		valLength = lengthBox->value();
-	}
-	
+	boxShape->SetColor(Quantity_NOC_GOLD);
 
-	TopoDS_Shape aTopoBox = BRepPrimAPI_MakeBox(valWidth, valHeight, valLength).Shape();
-	Handle(AIS_Shape) anAisBox = new AIS_Shape(aTopoBox);
-
-	MyPrimitive* anPrimCylinder = new MyBox(valWidth, valLength, valHeight);
-	anPrimCylinder->BindGraphicShape(anAisBox);
-
-	myOCCOpenGL->CreateShape(anPrimCylinder);
-
-	anAisBox->SetColor(Quantity_NOC_GOLD);
-
-	myOCCOpenGL->getContext()->Display(anAisBox, Standard_True);
+	myOCCOpenGL->CreateShape(box);
 }
 
 void OCCWindow::on_action_make_cone()
@@ -362,47 +328,7 @@ void OCCWindow::on_action_make_sphere()
 
 void OCCWindow::on_action_make_cylinder()
 {
-	QDialog * d = new QDialog();
-	QVBoxLayout * vbox = new QVBoxLayout();
 
-	QDoubleSpinBox * radiusBox = new QDoubleSpinBox();
-	radiusBox->setValue(1.0);
-	QDoubleSpinBox * heightBox = new QDoubleSpinBox();
-	heightBox->setValue(1.0);
-	QDialogButtonBox * buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok
-		| QDialogButtonBox::Cancel);
-
-	QObject::connect(buttonBox, SIGNAL(accepted()), d, SLOT(accept()));
-	QObject::connect(buttonBox, SIGNAL(rejected()), d, SLOT(reject()));
-	vbox->addWidget(radiusBox);
-	vbox->addWidget(heightBox);
-	vbox->addWidget(buttonBox);
-
-	d->setLayout(vbox);
-
-	int result = d->exec();
-	double valRadius, valHeight;
-
-	if (result == QDialog::Accepted)
-	{
-		valRadius = radiusBox->value();
-		valHeight = heightBox->value();
-	}
-
-	gp_Ax2 anAxis;
-	anAxis.SetLocation(gp_Pnt(0.0, 0.0, 0.0));
-
-	TopoDS_Shape aTopoCylinder = BRepPrimAPI_MakeCylinder(anAxis, valRadius, valHeight).Shape();
-	Handle(AIS_Shape) anAisCylinder = new AIS_Shape(aTopoCylinder);
-	
-	MyPrimitive* anPrimCylinder = new MyCylinder(valRadius, valHeight);
-	anPrimCylinder->BindGraphicShape(anAisCylinder);
-
-	myOCCOpenGL->CreateShape(anPrimCylinder);
-	
-	anAisCylinder->SetColor(Quantity_NOC_GOLD);
-	
-	myOCCOpenGL->getContext()->Display(anAisCylinder, Standard_True);
 }
 
 void OCCWindow::on_action_fuse()
@@ -442,7 +368,12 @@ void OCCWindow::on_action_compile()
 	{
 		myOCCOpenGL->getContext()->Display(s, Standard_True);
 	}
+}
 
+void OCCWindow::on_action_HELM_code(QString helm)
+{
+	editor->clear();
+	editor->appendPlainText(helm);
 }
 
 void OCCWindow::on_action_HELM_code(std::string helm)

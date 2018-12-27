@@ -12,7 +12,7 @@
 #include <QTableWidgetItem>
 
 #include "ui_PropertyWidget.h"
-
+#include "FeatureBox.h"
 #include "PrimitiveLibrary.h"
 
 class MyPropertyWidget : public QDockWidget
@@ -31,7 +31,7 @@ signals:
 	void sigRedraw(void);
 
 public slots:
-	void WritePropertiesToPropWidget(MyPrimitive* primitive);
+	void WritePropertiesToPropWidget(Part::FeaturePrimitive* primitive);
 	//void WritePropertiesToPropWidget(CMesh *mesh_);
 	//void WritePropertiesToPropWidget(CorkTriMesh *corkMesh_);
 	void ShowColorSelection();
@@ -44,7 +44,7 @@ public slots:
 private:
 	void InsertItem(QTableWidgetItem* item, int rowIndex, int columnIndex);
 	void InsertMergeRow(QTableWidgetItem* item, int rowIndex);
-
+	void WriteBoxProperties(Part::FeatureBox* box);
 	void WriteCylinderProperties(MyCylinder* cylinder);
 	void UpdateBoxProperties(MyBox * box);
 	// 	void WritePartialCylinderProperties(MyPartialCylinder* cylinder);
@@ -54,7 +54,7 @@ private:
 	// 	void WriteTorusProperties(MyTorus* torus);
 	// 	void WritePartialTorusProperties(MyPartialTorus* torus);
 	void WriteLumberProperties(MyLumber* lumber);
-	void WriteBoxProperties(MyBox* box);
+	
 
 	QPushButton* GenColorButton(Eigen::Vector3d color);
 	QCheckBox* GenCheckBox(bool checked);
@@ -68,7 +68,7 @@ public:
 	QColor buttonColor;
 	QCheckBox *currentCheckBox;
 	QComboBox *currentComboBox;
-	MyPrimitive *curPrimitive;
+	Part::FeaturePrimitive*curPrimitive;
 	std::vector< std::string > lumberList;
 };
 #endif

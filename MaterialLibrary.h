@@ -1,5 +1,9 @@
 #pragma once
 
+enum MaterialType {
+	LumberMaterial,
+	PlyMaterial
+};
 
 struct Material {
 	int materialType;
@@ -8,9 +12,11 @@ struct Material {
 
 class LumberWood : public Material {
 public:
-	explicit LumberWood(double _l, double _w, double _h) : length(_l), width(_w), height(_h) {};
-
-private:
+	LumberWood(double _l, double _w, double _h) : length(_l), width(_w), height(_h) 
+	{
+		materialType = MaterialType::LumberMaterial;
+	};
+	
 	double length;
 	double width;
 	double height;
@@ -18,9 +24,11 @@ private:
 
 class PlyWood : public Material {
 public:
-	explicit PlyWood(double _l, double _w, double _t) : length(_l), width(_w), thickness(_t) {};
+	PlyWood(double _l, double _w, double _t) : length(_l), width(_w), thickness(_t) 
+	{
+		materialType = MaterialType::PlyMaterial;
+	};
 
-private:
 	double length;
 	double width;
 	double thickness;

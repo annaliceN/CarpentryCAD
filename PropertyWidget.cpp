@@ -1,6 +1,7 @@
 
 #include "PropertyWidget.h"
 #include <QColorDialog>
+#include <QDoubleSpinBox>
 
 using namespace std;
 
@@ -17,7 +18,7 @@ MyPropertyWidget::MyPropertyWidget(QWidget *parent /* = 0 */)
 	connect(this, SIGNAL(VisibilityChangeSignal(void*)), parent, SLOT(primitiveVisibilityChanged(void*)));
 	connect(this, SIGNAL(NormalDirectionChangeSignal(MyPrimitive*)), parent, SLOT(primitiveNormalChanged(MyPrimitive*)));
 	connect(this, SIGNAL(LumberTypeChangeSignal(MyPrimitive*)), parent, SLOT(primitiveMetalTypeChanged(MyPrimitive*)));
-	connect(this, SIGNAL(sigRedraw()), parent, SLOT(Redraw()));
+	connect(this, SIGNAL(sigRedraw()), parent, SLOT(slotRedraw()));
 	connect(this, SIGNAL(sigLumberLengthChanged(MyLumber*, double)), parent, SLOT(onLumberLengthChanged(MyLumber*, double)));
 
 	currentButton = NULL;
@@ -37,44 +38,117 @@ MyPropertyWidget::~MyPropertyWidget()
 
 }
 
-void MyPropertyWidget::WritePropertiesToPropWidget(MyPrimitive* primitive)
+void MyPropertyWidget::WritePropertiesToPropWidget(Part::FeaturePrimitive* primitive)
 {
 	Clear();
 	curPrimitive = primitive;
 	// set property widget
-	switch (primitive->getPrimitiveType())
+	const auto primName = primitive->getViewProviderName();
+	
+	if (primName == "Box")
 	{
-	case PrimType::Box:
-		WriteBoxProperties(static_cast<MyBox*>(primitive));
-		break;
-	case PrimType::Cylinder:
-		//WriteCylinderProperties(static_cast<MyCylinder*>(primitive));
-		break;
-	case PrimType::Lumber:
-		WriteLumberProperties(static_cast<MyLumber*>(primitive));
-		break;
-// 	case MyPrimitive::PRIMITIVETYPE::PARTIALCYLINDER:
-// 		WritePartialCylinderProperties((MyPartialCylinder*)primitive);
-// 		break;
-// 	case MyPrimitive::PRIMITIVETYPE::PLANE:
-// 		WritePlaneProperties((MyPlane*)primitive);
-// 		break;
-// 	case MyPrimitive::PRIMITIVETYPE::SPHERE:
-// 		WriteSphereProperties((MySphere*)primitive);
-// 		break;
-// 	case MyPrimitive::PRIMITIVETYPE::TORUS:
-// 		WriteTorusProperties((MyTorus*)primitive);
-// 		break;
-// 	case MyPrimitive::PRIMITIVETYPE::PARTIALTORUS:
-// 		WritePartialTorusProperties((MyPartialTorus*)primitive);
-// 		break;
-// 	case MyPrimitive::PRIMITIVETYPE::BOX:
-// 		WriteBoxProperties((MyBox*)primitive);
-// 		break;
-	default:
-		break;
+		WriteBoxProperties(static_cast<Part::FeatureBox*>(primitive));
+	}
+
+}
+
+
+void MyPropertyWidget::WriteBoxProperties(Part::FeatureBox* box)
+{
+	QTableWidget *tableWidget = ui.tableWidget;
+	tableWidget->setRowCount(13);
+
+	QTableWidgetItem *tableWidgetItem = new QTableWidgetItem("Parameters");
+	InsertMergeRow(tableWidgetItem, 0);
+
+	int nRow = 1;
+
+	if (box->getPlacement()->getTypeId() == Part::PropertyPlacement::getClassTypeId())
+	{
+		Part::PropertyPlacement* placement = box->getPlacement();
+		Base::Placement pl = placement->getValue();
+
+		Base::Vector3d pos = pl.getPosition();
+		for (int i = 0; i < 3; ++i)
+		{
+			tableWidgetItem = new QTableWidgetItem(QString("Position ")+ ('X'+i));
+			InsertItem(tableWidgetItem, nRow, 0);
+
+			QDoubleSpinBox* spinBox = new QDoubleSpinBox;
+			spinBox->setValue(pos[i]);
+			tableWidget->setCellWidget(nRow, 1, spinBox);
+
+			connect(spinBox, static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged),
+				[=](double val) {
+				auto _plc = placement->getValue();
+				Base::Vector3d _pos = _plc.getPosition();
+				_pos[i] = val;
+				_plc.setPosition(_pos);
+				placement->setValue(_plc);
+				curPrimitive->onChanged(placement);
+				emit sigRedraw();
+			});
+
+			++nRow;
+		}
+		
+		Base::Rotation rot = pl.getRotation();
+		const std::string rotTitle[3] = { "Yaw", "Pitch", "Roll" };
+		double ypr[3] = { 0, 0, 0 };
+		rot.getYawPitchRoll(ypr[0], ypr[1], ypr[2]);
+		for (int i = 0; i < 3; ++i)
+		{
+			tableWidgetItem = new QTableWidgetItem(rotTitle[i].c_str());
+			InsertItem(tableWidgetItem, nRow, 0);
+			QDoubleSpinBox* spinBox = new QDoubleSpinBox;
+			spinBox->setValue(ypr[i]);
+			tableWidget->setCellWidget(nRow, 1, spinBox);
+		
+			connect(spinBox, static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged),
+				[=](double val) {
+				double _ypr[3] = { 0, 0, 0 };
+				auto _plc = placement->getValue();
+				Base::Rotation _rot = _plc.getRotation();
+				_rot.getYawPitchRoll(_ypr[0], _ypr[1], _ypr[2]);
+				_ypr[i] = val;
+				_rot.setYawPitchRoll(_ypr[0], _ypr[1], _ypr[2]);
+				_plc.setRotation(_rot);
+				placement->setValue(_plc);
+				curPrimitive->onChanged(placement);
+				emit sigRedraw();
+			});
+
+			++nRow;
+		}
+	}
+
+	std::vector< App::Property*> pList;
+	box->getPropertyList(pList);
+
+	for (auto & p : pList)
+	{
+		if (p->getTypeId() == App::PropertyFloat::getClassTypeId())
+		{
+			App::PropertyFloat* pf = static_cast<App::PropertyFloat*>(p);
+			tableWidgetItem = new QTableWidgetItem(pf->getName());
+			InsertItem(tableWidgetItem, nRow, 0);
+
+			QDoubleSpinBox* spinBox = new QDoubleSpinBox;
+			spinBox->setValue(pf->getValue());
+			tableWidget->setCellWidget(nRow, 1, spinBox);
+
+			connect(spinBox, static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged),
+				[=](double val) {
+				pf->setValue(val);
+				std::cout << pf->getValue() << std::endl;
+				curPrimitive->onChanged(pf);
+				emit sigRedraw();
+			});
+			++nRow;
+		}
 	}
 }
+
 
 void MyPropertyWidget::ShowColorSelection()
 {
@@ -82,47 +156,38 @@ void MyPropertyWidget::ShowColorSelection()
 	if (!buttonColor.isValid()) return;
 	QPalette palette(buttonColor);
 	currentButton->setPalette(palette);
-// 	if (curPrimitive)
-// 		curPrimitive->SetColor(Vector3D(buttonColor.red() / 255.0, buttonColor.green() / 255.0, buttonColor.blue() / 255.0));
-// 	else if (mesh)
-// 		mesh->color = Vector3D(buttonColor.red() / 255.0, buttonColor.green() / 255.0, buttonColor.blue() / 255.0);
-// 	else if (corkMesh)
-// 	{
-// 		corkMesh->r = buttonColor.red() / 255.0;
-// 		corkMesh->g = buttonColor.green() / 255.0;
-// 		corkMesh->b = buttonColor.blue() / 255.0;
-// 	}
 }
 
 void MyPropertyWidget::VisibilityChange(int state)
 {
-// 	if (curPrimitive) {
-// 		curPrimitive->isVisible = (state == Qt::Checked);
-// 		emit VisibilityChangeSignal(curPrimitive);
-// 	}
-// 	else if (mesh) {
-// 		mesh->isVisible = (state == Qt::Checked);
-// 		emit VisibilityChangeSignal(mesh);
-// 	}
-// 	else if (corkMesh) {
-// 		corkMesh->isVisible = (state == Qt::Checked);
-// 		emit VisibilityChangeSignal(corkMesh);
-// 	}
+	// 	if (curPrimitive) {
+	// 		curPrimitive->isVisible = (state == Qt::Checked);
+	// 		emit VisibilityChangeSignal(curPrimitive);
+	// 	}
+	// 	else if (mesh) {
+	// 		mesh->isVisible = (state == Qt::Checked);
+	// 		emit VisibilityChangeSignal(mesh);
+	// 	}
+	// 	else if (corkMesh) {
+	// 		corkMesh->isVisible = (state == Qt::Checked);
+	// 		emit VisibilityChangeSignal(corkMesh);
+	// 	}
 }
 
 void MyPropertyWidget::NormalDirectionChange(int idx)
 {
-// 	curPrimitive->normalOutward = idx == 0;
-// 	emit NormalDirectionChangeSignal(curPrimitive);
+	// 	curPrimitive->normalOutward = idx == 0;
+	// 	emit NormalDirectionChangeSignal(curPrimitive);
 }
 
 void MyPropertyWidget::LumberTypeChange(int idx)
 {
+	/*
 	std::cout << "type change" << std::endl;
 	auto curLumber = static_cast<MyLumber*>(curPrimitive);
 	curLumber->AssignStandard(static_cast<MyLumber::StandardLumber>(idx));
 	curLumber->UpdateStandard();
-	emit sigRedraw();
+	emit sigRedraw();*/
 }
 
 void MyPropertyWidget::Clear()
@@ -170,21 +235,21 @@ void MyPropertyWidget::WriteCylinderProperties(MyCylinder* cylinder)
 
 	tableWidgetItem = new QTableWidgetItem("Position");
 	InsertItem(tableWidgetItem, 3, 0);
-// 	Vector3D bC = cylinder->GetPosition();
-// 	tableWidgetItem = new QTableWidgetItem(("(" + std::to_string(bC.x) + ", " +
-// 		std::to_string(bC.y) + ", " + std::to_string(bC.z) + ")").c_str());
-// 	InsertItem(tableWidgetItem, 3, 1);
+	// 	Vector3D bC = cylinder->GetPosition();
+	// 	tableWidgetItem = new QTableWidgetItem(("(" + std::to_string(bC.x) + ", " +
+	// 		std::to_string(bC.y) + ", " + std::to_string(bC.z) + ")").c_str());
+	// 	InsertItem(tableWidgetItem, 3, 1);
 
 	tableWidgetItem = new QTableWidgetItem("Axis");
 	InsertItem(tableWidgetItem, 4, 0);
-// 	Vector3D axis(0, 0, 1);
-// 	double m[16];
-// 	GenIdentityMatrix(m); MultiRotateMatrix(m, cylinder->GetRotateAngle(), cylinder->GetRotateAxis());
-// 	MultiMatrix(m, cylinder->localRotateMatrix);
-// 	TransformVec(m, axis); axis.normalize();
-// 	tableWidgetItem = new QTableWidgetItem(("(" + std::to_string(axis.x) + ", " +
-// 		std::to_string(axis.y) + ", " + std::to_string(axis.z) + ")").c_str());
-// 	InsertItem(tableWidgetItem, 4, 1);
+	// 	Vector3D axis(0, 0, 1);
+	// 	double m[16];
+	// 	GenIdentityMatrix(m); MultiRotateMatrix(m, cylinder->GetRotateAngle(), cylinder->GetRotateAxis());
+	// 	MultiMatrix(m, cylinder->localRotateMatrix);
+	// 	TransformVec(m, axis); axis.normalize();
+	// 	tableWidgetItem = new QTableWidgetItem(("(" + std::to_string(axis.x) + ", " +
+	// 		std::to_string(axis.y) + ", " + std::to_string(axis.z) + ")").c_str());
+	// 	InsertItem(tableWidgetItem, 4, 1);
 
 	tableWidgetItem = new QTableWidgetItem("Appearance");
 	InsertMergeRow(tableWidgetItem, 5);
@@ -293,70 +358,15 @@ void MyPropertyWidget::WriteLumberProperties(MyLumber *lumber)
 	InsertItem(tableWidgetItem, 12, 0);
 }
 
-void MyPropertyWidget::WriteBoxProperties(MyBox* box)
-{
-	QTableWidget *tableWidget = ui.tableWidget;
-	tableWidget->setRowCount(13);
-
-	QTableWidgetItem *tableWidgetItem = new QTableWidgetItem("Parameters");
-	InsertMergeRow(tableWidgetItem, 0);
-
-	tableWidgetItem = new QTableWidgetItem("Center");
-	InsertItem(tableWidgetItem, 1, 0);
-	Eigen::Vector3d axis = box->getPosition();
-	tableWidgetItem = new QTableWidgetItem(("(" + std::to_string(axis.x()) + ", " +
-		std::to_string(axis.y()) + ", " + std::to_string(axis.z()) + ")").c_str());
-	InsertItem(tableWidgetItem, 1, 1);
-
-	tableWidgetItem = new QTableWidgetItem("Width");
-	InsertItem(tableWidgetItem, 2, 0);
-	tableWidgetItem = new QTableWidgetItem(std::to_string(box->width).c_str());
-	InsertItem(tableWidgetItem, 2, 1);
-
-	tableWidgetItem = new QTableWidgetItem("Height");
-	InsertItem(tableWidgetItem, 3, 0);
-	tableWidgetItem = new QTableWidgetItem(std::to_string(box->height).c_str());
-	InsertItem(tableWidgetItem, 3, 1);
-
-	tableWidgetItem = new QTableWidgetItem("Length");
- 	InsertItem(tableWidgetItem, 4, 0);
- 	tableWidgetItem = new QTableWidgetItem(std::to_string(box->length).c_str());
- 	InsertItem(tableWidgetItem, 4, 1);
-
-// 	QPushButton *colorPalet = GenColorButton(box->GetColor());
-// 	tableWidget->setCellWidget(6, 1, colorPalet);
-// 	tableWidgetItem = new QTableWidgetItem("Visible");
-// 	InsertItem(tableWidgetItem, 7, 0);
-// 	QCheckBox *checkBox = GenCheckBox(box->isVisible);
-// 	tableWidget->setCellWidget(7, 1, checkBox);
-
-	tableWidgetItem = new QTableWidgetItem("Length");
-	InsertItem(tableWidgetItem, 5, 0);
-	QSlider *slider = new QSlider(Qt::Horizontal);
-
-	tableWidget->setCellWidget(5, 1, slider);
-	connect(slider, SIGNAL(valueChanged(int)), this, SLOT(onLengthChanged(int)));
-
-	tableWidgetItem = new QTableWidgetItem("Material");
-	InsertMergeRow(tableWidgetItem, 9);
-	tableWidgetItem = new QTableWidgetItem("Lumber");
-	InsertItem(tableWidgetItem, 10, 0);
-	tableWidgetItem = new QTableWidgetItem("Volume");
-	InsertItem(tableWidgetItem, 11, 0);
-	tableWidgetItem = new QTableWidgetItem(std::to_string(box->getVolume()).c_str());
-	InsertItem(tableWidgetItem, 11, 1);
-	tableWidgetItem = new QTableWidgetItem("Mass");
-	InsertItem(tableWidgetItem, 12, 0);
-}
-
 void MyPropertyWidget::onLengthChanged(int length)
 {
+	/*
 	MyLumber *curLumber = static_cast<MyLumber*>(curPrimitive);
 	double newLength = length / 100.0 * (curLumber->maxLength - curLumber->minLength);
 	curLumber->length = newLength;
 	ui.tableWidget->item(4, 1)->setText(std::to_string(curLumber->length).c_str());
-	
-	emit sigLumberLengthChanged(curLumber, newLength);
+
+	emit sigLumberLengthChanged(curLumber, newLength);*/
 }
 
 QPushButton* MyPropertyWidget::GenColorButton(Eigen::Vector3d color)

@@ -12,6 +12,7 @@
 #include "PHELM.h"
 #include "PropertyWidget.h"
 #include "ObjectWidget.h"
+#include "FeatureBox.h"
 
 class QMenu;
 class QRubberBand;
@@ -65,7 +66,8 @@ public slots:
 	void objSelected();
 	void onLumberLengthChanged(MyLumber*, double);
 	void Redraw(void);
-	void CreateShape(MyPrimitive * prim);
+	void CreateShape(Part::FeaturePrimitive* prim);
+	void slotRedraw(void);
 
 protected:
     // Paint events.
@@ -146,6 +148,8 @@ private:
 	MyObjectWidget *objectWidget;
 
 	std::unordered_map< QTreeWidgetItem*, void* > objMapping;
+
+	std::map< Handle(AIS_Shape), Part::FeaturePrimitive*> primMapping;
 };
 
 #endif 

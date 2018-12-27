@@ -60,6 +60,8 @@ private slots:
 	
 	void on_action_compiler_hints(QString line);
 
+	void on_action_HELM_code(QString helm);
+
 	void on_action_HELM_code(std::string helm);
 
 private:

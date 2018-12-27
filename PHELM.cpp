@@ -3,59 +3,130 @@
 void PHELM::LoadMaterialLib()
 {
 	// Ply wood
-	PlyWood pw1(2.0, 2.0, 0.1);
-	vecMaterial.push_back(pw1);
+	vecMaterial.push_back(new PlyWood(2.0, 2.0, 0.4));
 
 	// Lumber wood
-	LumberWood lw1(0.1, 0.1, 1.0);
-	vecMaterial.push_back(lw1);
-
+	vecMaterial.push_back(new LumberWood(2.0, 2.0, 16));
+	vecMaterial.push_back(new LumberWood(2.0, 6.0, 16));
+	vecMaterial.push_back(new LumberWood(2.0, 4.0, 16));
+	vecMaterial.push_back(new LumberWood(1.0, 4.0, 16));
+	
+	materialLoaded = true;
 }
 
-void PHELM::AssignCreatedShape(MyPrimitive* prim)
+QString PHELM::AssignCreatedShape(Part::FeaturePrimitive* prim)
 {
-	vecPrimitive.push_back(*prim);
-	
+	vecPrimitive.push_back(prim);
 	// AIS_Shape -> Variable Name
 	mapAisShapeStr[prim->getGraphicShape()] = getVarName();
+	auto graphicShapeName = mapAisShapeStr[prim->getGraphicShape()];
+	return QString(graphicShapeName.c_str());
+}
 
-	// AIS_Shape -> MyPrimitive*
-	mapAisShapePrimtive[prim->getGraphicShape()] = prim;
+QString PHELM::CompileBox(Part::FeatureBox* box)
+{
+	const double MIN_JIGSAW = 0.2;
+	const double MIN_CHOPSAW = 0.2;
+	QString boxHELM;
+	double side[3] = { box->Length.getValue(), box->Width.getValue(), box->Height.getValue() };
+	std::sort(side, side+3);
+
+	double maxSide = side[2];
+	bool solutionFound = false;
+
+	double objVal = -DBL_MAX;
+	Material* bestMat;
+
+	for (auto& mat : vecMaterial)
+	{
+		if (mat->materialType == MaterialType::LumberMaterial)
+		{
+			auto lumber = static_cast<LumberWood*>(mat);
+			
+			if (maxSide < lumber->height)
+			{
+				if (side[0] < lumber->length && side[1] < lumber->width)
+				{
+					// Manufacturable constraint (Chopsaw)
+					if (side[2] < MIN_CHOPSAW || ((lumber->height - side[2]) < MIN_CHOPSAW && (lumber->height - side[2]) > 1e-2))
+					{
+						std::cout << "out 1" << std::endl;
+						continue;
+					}
+
+
+					// Manufacturable constraint (Jigsaw)
+					if (side[0] < MIN_JIGSAW ||
+						side[1] < MIN_JIGSAW ||
+						((lumber->length - side[0]) < MIN_JIGSAW && (lumber->length - side[0]) > 1e-2) ||
+						((lumber->width - side[1]) < MIN_JIGSAW && (lumber->width - side[1]) > 1e-2))
+					{
+						std::cout << "out 2" << std::endl;
+						continue;
+					}
+
+
+					// Objective value
+					double tmpVal = (side[0] * side[1]) / (lumber->length * lumber->height) * (side[2]) / (lumber->height);
+					if (tmpVal > objVal)
+					{
+						solutionFound = true;
+						objVal = tmpVal;
+						bestMat = mat;
+					}
+				}
+			}
+			
+		}
+	}
+
+	if (solutionFound)
+	{
+		auto lumber = static_cast<LumberWood*>(bestMat);
+		boxHELM += "lumber (" + QString::number(lumber->length) + "by" + QString::number(lumber->width) + "@" + QString::number(lumber->height) + ")\n";
+		boxHELM += "chopsaw (" + QString::number(side[2]) + ")\n";
+		boxHELM += "jigsaw (line (X " + QString::number(side[0]) + ")\n";
+		boxHELM += "jigsaw (line (Y " + QString::number(side[1]) + ")\n";
+	}
+	else
+	{
+		boxHELM = "The object is too large to be fabricate.";
+	}
+
+	return boxHELM;
+}
+
+void PHELM::CompileToHELM()
+{
+	if (!materialLoaded) LoadMaterialLib();
+
+	QString compiledHELM;
 	
-
-	const auto graphicShapeName = mapAisShapeStr[prim->getGraphicShape()];
-	std::string lineCodeForCAD;
-
-	if (prim->pType == PrimType::Box)
+	if (!materialLoaded)
 	{
-		MyBox* boxPrim = static_cast<MyBox*>(prim);
-		lineCodeForCAD = "(box " + graphicShapeName + " " +
-			std::to_string(boxPrim->length) + " " + 
-			std::to_string(boxPrim->width) + " " +
-			std::to_string(boxPrim->height) + ")";
-
-		// push it to the cad code
-		CADCode.push_back(lineCodeForCAD);
-	}
-	else if (prim->pType == PrimType::Cylinder)
-	{
-		MyCylinder* boxPrim = static_cast<MyCylinder*>(prim);
-		lineCodeForCAD = "(cylinder " + graphicShapeName + " " +
-			std::to_string(boxPrim->radius) + " " +
-			std::to_string(boxPrim->height) + ")";
-
-		// push it to the cad code
-		CADCode.push_back(lineCodeForCAD);
-	}
-	else if (prim->pType == PrimType::Lumber)
-	{
-		MyLumber* lumberPrim = static_cast<MyLumber*>(prim);
-		std::string compiledHELM = "(lumber " + graphicShapeName + " " + "TwoByFour)\n(chop " + graphicShapeName + " 0 0 " + std::to_string(lumberPrim->length) + " 0 0 1)";
-		emit sigAppendHELMCode(compiledHELM);
+		compiledHELM = "Error! Please load materials first.";
+		return SendHELMCode(compiledHELM);
 	}
 
-	// For debug
-	std::cout << lineCodeForCAD;
+	for (auto p : vecPrimitive)
+	{
+		QString varName = QString(mapAisShapeStr[p->getGraphicShape()].c_str());
+		
+		// Simple case: box
+		if (p->getTypeId() == Part::FeatureBox::getClassTypeId())
+		{
+			auto box = static_cast<Part::FeatureBox*>(p);
+			compiledHELM += CompileBox(box);
+		}
+	}
+
+	return SendHELMCode(compiledHELM);
+}
+
+void PHELM::SendHELMCode(QString& helm)
+{
+	emit sigReplaceHELMCode(helm);
+	return;
 }
 
 void PHELM::CreateShape(const Handle(AIS_Shape)& shape)
@@ -97,15 +168,6 @@ void PHELM::IntersectAwithB(const Handle(AIS_Shape)& shapeA, const Handle(AIS_Sh
 		
 }
 
-void PHELM::CompileToHelm()
-{
-	std::string compiledHELM;
-	for (auto line : HELMCode)
-	{
-		compiledHELM.append(line);
-	}
-	emit sigAppendHELMCode(compiledHELM);
-}
 
 std::string PHELM::getVarName()
 {
