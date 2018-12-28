@@ -50,10 +50,8 @@ QString PHELM::CompileBox(Part::FeatureBox* box)
 					// Manufacturable constraint (Chopsaw)
 					if (side[2] < MIN_CHOPSAW || ((lumber->height - side[2]) < MIN_CHOPSAW && (lumber->height - side[2]) > 1e-2))
 					{
-						std::cout << "out 1" << std::endl;
 						continue;
 					}
-
 
 					// Manufacturable constraint (Jigsaw)
 					if (side[0] < MIN_JIGSAW ||
@@ -61,10 +59,8 @@ QString PHELM::CompileBox(Part::FeatureBox* box)
 						((lumber->length - side[0]) < MIN_JIGSAW && (lumber->length - side[0]) > 1e-2) ||
 						((lumber->width - side[1]) < MIN_JIGSAW && (lumber->width - side[1]) > 1e-2))
 					{
-						std::cout << "out 2" << std::endl;
 						continue;
 					}
-
 
 					// Objective value
 					double tmpVal = (side[0] * side[1]) / (lumber->length * lumber->height) * (side[2]) / (lumber->height);

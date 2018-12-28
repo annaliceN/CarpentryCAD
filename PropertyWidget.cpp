@@ -75,6 +75,7 @@ void MyPropertyWidget::WriteBoxProperties(Part::FeatureBox* box)
 			InsertItem(tableWidgetItem, nRow, 0);
 
 			QDoubleSpinBox* spinBox = new QDoubleSpinBox;
+			spinBox->setRange(-200, 200);
 			spinBox->setValue(pos[i]);
 			tableWidget->setCellWidget(nRow, 1, spinBox);
 
