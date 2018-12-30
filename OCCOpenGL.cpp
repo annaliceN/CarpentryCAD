@@ -16,6 +16,7 @@
 #include <BRepBuilderAPI_Transform.hxx>
 #include <BRepBuilderAPI_GTransform.hxx>
 
+#include <TopoDS.hxx>
 
 #ifdef WNT
 #include <WNT_Window.hxx>
@@ -49,12 +50,17 @@ OCCOpenGL::OCCOpenGL(QWidget* parent)
 	myYmax(0),
 	myCurrentMode(CurAction3d_DynamicRotation),
 	myDegenerateModeIsOn(Standard_True),
-	myRectBand(NULL),
-	interactiveMode(InterMode::Viewing)
+	myRectBand(nullptr),
+	interactiveMode(InterMode::Viewing),
+	myDrawActions(nullptr),
+	GRIDCounter(true)
 {
 	propertyWidget = new MyPropertyWidget(this);
 	objectWidget = new MyObjectWidget(this);
 	helm = new PHELM(this);
+
+	// Initialize cursors
+	initCursors();
 
 	// No Background
 	setBackgroundRole(QPalette::NoRole);
@@ -76,7 +82,7 @@ void OCCOpenGL::init()
 	}
 
 	// Get window handle. This returns something suitable for all platforms.
-	WId window_handle = (WId)winId();
+	auto window_handle = (WId)winId();
 
 	// Create appropriate window for platform
 #ifdef WNT
@@ -91,12 +97,18 @@ void OCCOpenGL::init()
 	myViewer = new V3d_Viewer(GetGraphicDriver(), Standard_ExtString("viewer3d"));
 
 	myView = myViewer->CreateView();
-
+	
+	myView->SetBgGradientColors(Quantity_NOC_SKYBLUE, Quantity_NOC_GRAY, Aspect_GFM_VER);
 	myView->SetWindow(wind);
 	if (!wind->IsMapped()) wind->Map();
 
 	// Create AISInteractiveContext
 	myContext = new AIS_InteractiveContext(myViewer);
+
+	auto * mySG = new Sketcher_QtGUI(parentWidget());
+	mySketcher = new Sketcher(myContext, mySG);
+	mySketcher->SetSnap(Sketcher_SnapType::SnapAnalyse);
+	mySketcher->SetColor(Quantity_NameOfColor::Quantity_NOC_RED);
 
 	// Set up lights etc
 	myViewer->SetDefaultLights();
@@ -105,11 +117,23 @@ void OCCOpenGL::init()
 	myView->SetBackgroundColor(Quantity_NOC_WHITE);
 	myView->MustBeResized();
 	myView->SetShadingModel(Graphic3d_TypeOfShadingModel::V3d_PHONG);
-	myView->SetZoom(50);
+	myView->SetZoom(6);
 	myView->TriedronDisplay(Aspect_TOTP_LEFT_LOWER, Quantity_NOC_BLACK, 0.08, V3d_ZBUFFER);
 
 	myContext->SetDisplayMode(AIS_Shaded, Standard_True);
-	myContext->MainSelector()->SetPickClosest(Standard_False);
+	if (myContext->HasOpenedContext())
+	{
+		myContext->ClearLocalContext();
+	}
+	myContext->OpenLocalContext();
+	myContext->ActivateStandardMode(TopAbs_FACE);
+
+	myContext->DefaultDrawer()->SetFaceBoundaryDraw(Standard_True);
+	myContext->DefaultDrawer()->FaceBoundaryAspect()->SetColor(Quantity_NOC_BLACK);
+	myContext->UpdateCurrentViewer();
+
+	onGrid();
+	//myContext->MainSelector()->SetPickClosest(Standard_False);
 
 	// face selection
 	/*
@@ -117,10 +141,213 @@ void OCCOpenGL::init()
 	myContext->OpenLocalContext();
 	myContext->ActivateStandardMode(TopAbs_FACE);
 	*/
-
-	aManipulator = new AIS_Manipulator();
-	aManipulator->SetModeActivationOnDetection(Standard_True);
 }
+
+QList<QAction *> *OCCOpenGL::getDrawActions() {
+	initDrawActions();
+	return myDrawActions;
+}
+
+void OCCOpenGL::initDrawActions() {
+	if (myDrawActions) return;
+	myDrawActions = new QList<QAction *>();
+	QAction* a;
+	a = new QAction(QIcon(":/icon_file/erase"), QString("erase all"), this);
+	connect(a, SIGNAL(triggered()), this, SLOT(onErase()));
+	myDrawActions->insert(MyEraseActionId, a);
+	a->setCheckable(false);
+	connect(a, SIGNAL(toggled(bool)), this, SLOT(updateToggled(bool)));
+
+	a = new QAction(QIcon(":/icon_file/delete"), QString("delete selected"), this);
+	connect(a, SIGNAL(triggered()), this, SLOT(onDeleteSelected()));
+	myDrawActions->insert(MyDeleteActionId, a);
+	a->setCheckable(false);
+	connect(a, SIGNAL(toggled(bool)), this, SLOT(updateToggled(bool)));
+
+	a = new QAction(QIcon(":/icon_file/property"), QString("view objects property"), this);
+	connect(a, SIGNAL(triggered()), this, SLOT(onProperty()));
+	a->setCheckable(false);
+	connect(a, SIGNAL(toggled(bool)), this, SLOT(updateToggled(bool)));
+	myDrawActions->insert(MyPropertyActionId, a);
+
+	a = new QAction(QIcon(":/icon_file/redraw"), QString("redraw objects"), this);
+	connect(a, SIGNAL(triggered()), this, SLOT(onRedrawAll()));
+	a->setCheckable(false);
+	connect(a, SIGNAL(toggled(bool)), this, SLOT(updateToggled(bool)));
+	myDrawActions->insert(MyRedrawActionId, a);
+
+	a = new QAction(QIcon(":/icon_file/plane"), QString("change plane"), this);
+	connect(a, SIGNAL(triggered()), this, SLOT(onChangePlane()));
+	a->setCheckable(false);
+	connect(a, SIGNAL(toggled(bool)), this, SLOT(updateToggled(bool)));
+	myDrawActions->insert(MyChangePlaneAction, a);
+
+	a = new QAction(QIcon(":/icon_file/grid"), QString("grid"), this);
+	connect(a, SIGNAL(triggered()), this, SLOT(onGrid()));
+	myDrawActions->insert(MyGridActionId, a);
+
+	a = new QAction(QIcon(":/icon_file/inputPoint"), QString("input points"), this);
+	connect(a, SIGNAL(triggered()), this, SLOT(onInputPoints()));
+	a->setCheckable(true);
+	connect(a, SIGNAL(toggled(bool)), this, SLOT(updateToggled(bool)));
+	myDrawActions->insert(MyInputPointAction, a);
+
+	a = new QAction(QIcon(":/icon_file/inputLine"), QString("input line"), this);
+	connect(a, SIGNAL(triggered()), this, SLOT(onInputLines()));
+	a->setCheckable(true);
+	connect(a, SIGNAL(toggled(bool)), this, SLOT(updateToggled(bool)));
+	myDrawActions->insert(MyInputLineAction, a);
+
+	a = new QAction(QIcon(":/icon_file/inputCircle"), QString("input circles with radius"), this);
+	connect(a, SIGNAL(triggered()), this, SLOT(onInputCircles()));
+	a->setCheckable(true);
+	connect(a, SIGNAL(toggled(bool)), this, SLOT(updateToggled(bool)));
+	myDrawActions->insert(MyInputCircleAction, a);
+
+	a = new QAction(QIcon(":/icon_file/inputCircle3p"), QString("input circle by three points"), this);
+	connect(a, SIGNAL(triggered()), this, SLOT(onInputCircles3P()));
+	a->setCheckable(true);
+	connect(a, SIGNAL(toggled(bool)), this, SLOT(updateToggled(bool)));
+	myDrawActions->insert(MyInputCircle3PAction, a);
+
+	a = new QAction(QIcon(":/icon_file/inputCircle2PTan"), QString("input circle by 2p, tangential to 3 curve"), this);
+	connect(a, SIGNAL(triggered()), this, SLOT(onInputCircles2PTan()));
+	a->setCheckable(true);
+	connect(a, SIGNAL(toggled(bool)), this, SLOT(updateToggled(bool)));
+	myDrawActions->insert(MyInputCircle2PTanAction, a);
+
+	a = new QAction(QIcon(":/icon_file/inputCircleP2Tan"), QString("input circle by p, 2 tangential to 3 curve"), this);
+	connect(a, SIGNAL(triggered()), this, SLOT(onInputCirclesP2Tan()));
+	a->setCheckable(true);
+	connect(a, SIGNAL(toggled(bool)), this, SLOT(updateToggled(bool)));
+	myDrawActions->insert(MyInputCircleP2TanAction, a);
+
+	a = new QAction(QIcon(":/icon_file/inputCircle3tan"), QString("input circle by three tan"), this);
+	connect(a, SIGNAL(triggered()), this, SLOT(onInputCircles3Tan()));
+	a->setCheckable(true);
+	connect(a, SIGNAL(toggled(bool)), this, SLOT(updateToggled(bool)));
+	myDrawActions->insert(MyInputCircle3TanAction, a);
+
+	a = new QAction(QIcon(":/icon_file/inputArc3p"), QString("input arc by 3 points"), this);
+	connect(a, SIGNAL(triggered()), this, SLOT(onInputArc3P()));
+	a->setCheckable(true);
+	connect(a, SIGNAL(toggled(bool)), this, SLOT(updateToggled(bool)));
+	myDrawActions->insert(MyInputArc3PAction, a);
+
+	a = new QAction(QIcon(":/icon_file/inputArcCenter2p"), QString("input arc by center &2points"), this);
+	connect(a, SIGNAL(triggered()), this, SLOT(onInputArcCenter2P()));
+	a->setCheckable(true);
+	connect(a, SIGNAL(toggled(bool)), this, SLOT(updateToggled(bool)));
+	myDrawActions->insert(MyInputArcCenter2PAction, a);
+
+	a = new QAction(QIcon(":/icon_file/inputBezierCurve"), QString("input BezierCurve"), this);
+	connect(a, SIGNAL(triggered()), this, SLOT(onInputBezierCurve()));
+	a->setCheckable(true);
+	connect(a, SIGNAL(toggled(bool)), this, SLOT(updateToggled(bool)));
+	myDrawActions->insert(MyInputBezierCurveAction, a);
+
+	a = new QAction(QIcon(":/icon_file/trimcurve"), QString("trim curve"), this);
+	connect(a, SIGNAL(triggered()), this, SLOT(onTrimCurve()));
+	a->setCheckable(true);
+	connect(a, SIGNAL(toggled(bool)), this, SLOT(updateToggled(bool)));
+	myDrawActions->insert(MyTrimCurveAction, a);
+}
+
+
+void OCCOpenGL::onDeleteSelected() {
+	mySketcher->DeleteSelectedObject();
+}
+
+void OCCOpenGL::onProperty() {
+	mySketcher->ViewProperties();
+}
+
+void OCCOpenGL::onRedrawAll() {
+	mySketcher->RedrawAll();
+}
+
+void OCCOpenGL::onChangePlane() {
+	gp_Dir dir(2, 0, 1);
+
+	gp_Ax3 newgp_Ax3(gp::Origin(), dir);
+
+	mySketcher->SetCoordinateSystem(newgp_Ax3);
+}
+
+
+void OCCOpenGL::onGrid() {
+
+	Handle(V3d_Viewer) aViewer = myView->Viewer();
+	if (GRIDCounter)
+	{
+		aViewer->ActivateGrid(GRID1);
+		GRIDCounter = false;
+	}
+	else
+	{
+		aViewer->DeactivateGrid();
+		//	aViewer->ActivateGrid(GRID2);
+		GRIDCounter = true;
+	}
+
+	myView->Update();
+}
+
+void OCCOpenGL::onInputPoints() {
+	mySketcher->ObjectAction(Point_Method);
+	myCurrentMode = SketcherAction;
+}
+
+void OCCOpenGL::onInputLines() {
+	mySketcher->ObjectAction(Line2P_Method);
+	myCurrentMode = SketcherAction;
+}
+
+void OCCOpenGL::onInputCircles() {
+	mySketcher->ObjectAction(CircleCenterRadius_Method);
+	myCurrentMode = SketcherAction;
+}
+
+void OCCOpenGL::onInputCircles3P() {
+	mySketcher->ObjectAction(Circle3P_Method);
+	myCurrentMode = SketcherAction;
+}
+
+void OCCOpenGL::onInputCircles2PTan() {
+	mySketcher->ObjectAction(Circle2PTan_Method);
+	myCurrentMode = SketcherAction;
+}
+
+void OCCOpenGL::onInputCirclesP2Tan() {
+	mySketcher->ObjectAction(CircleP2Tan_Method);
+	myCurrentMode = SketcherAction;
+}
+
+void OCCOpenGL::onInputCircles3Tan() {
+	mySketcher->ObjectAction(Circle3Tan_Method);
+	myCurrentMode = SketcherAction;
+}
+
+void OCCOpenGL::onInputArc3P() {
+	mySketcher->ObjectAction(Arc3P_Method);
+	myCurrentMode = SketcherAction;
+}
+
+void OCCOpenGL::onInputArcCenter2P() {
+	mySketcher->ObjectAction(ArcCenter2P_Method);
+	myCurrentMode = SketcherAction;
+}
+
+void OCCOpenGL::onInputBezierCurve() {
+	mySketcher->ObjectAction(BezierCurve_Method);
+	myCurrentMode = SketcherAction;
+}
+
+void OCCOpenGL::onTrimCurve() {
+	mySketcher->ObjectAction(Trim_Method);
+	myCurrentMode = SketcherAction;
+}
+
 
 void OCCOpenGL::ApplyConnections()
 {
@@ -146,29 +373,29 @@ void OCCOpenGL::resizeEvent(QResizeEvent* /*theEvent*/)
 	}
 }
 
-void OCCOpenGL::fitAll(void)
+void OCCOpenGL::fitAll()
 {
 	myView->FitAll();
 	myView->ZFitAll();
 	myView->Redraw();
 }
 
-void OCCOpenGL::reset(void)
+void OCCOpenGL::reset()
 {
 	myView->Reset();
 }
 
-void OCCOpenGL::pan(void)
+void OCCOpenGL::pan()
 {
 	myCurrentMode = CurAction3d_DynamicPanning;
 }
 
-void OCCOpenGL::zoom(void)
+void OCCOpenGL::zoom()
 {
 	myCurrentMode = CurAction3d_DynamicZooming;
 }
 
-void OCCOpenGL::rotate(void)
+void OCCOpenGL::rotate()
 {
 	myCurrentMode = CurAction3d_DynamicRotation;
 }
@@ -189,118 +416,10 @@ void OCCOpenGL::mousePressEvent(QMouseEvent* theEvent)
 	}
 }
 
-void OCCOpenGL::mouseReleaseEvent(QMouseEvent* theEvent)
-{
+void OCCOpenGL::mouseReleaseEvent(QMouseEvent* theEvent) {
 	if (theEvent->button() == Qt::LeftButton)
 	{
-
 		onLButtonUp(theEvent->buttons() | theEvent->modifiers(), theEvent->pos());
-
-
-		auto numSelected = myContext->NbSelected();
-		if (interactiveMode == InterMode::Manipulating &&
-			numSelected == 1 &&
-			aManipulator->Object().get() != myContext->SelectedInteractive().get())
-		{
-
-		}
-		else
-		{
-			myContext->InitSelected();
-		}
-
-
-		if ((theEvent->buttons() | theEvent->modifiers()) & Qt::ControlModifier)
-		{
-			if (aManipulator->IsAttached()) aManipulator->Detach();
-
-			if (numSelected > 1)
-			{
-				vecShapes.clear();
-				while (myContext->MoreSelected())
-				{
-					if (myContext->HasSelectedShape())
-					{
-						auto selectedInteractiveObj = myContext->SelectedInteractive();
-						vecShapes.emplace_back(selectedInteractiveObj);
-					}
-					myContext->NextSelected();
-				}
-			}
-			std::cout << "vecshapes " << vecShapes.size() << std::endl;
-			// If CTRL pressed, only execute it
-			return;
-		}
-
-		if (numSelected == 1 && interactiveMode == InterMode::Viewing)
-		{
-			while (myContext->MoreSelected())
-			{
-				if (myContext->HasSelectedShape())
-				{
-					auto selectedInteractiveObj = myContext->SelectedInteractive();
-					AIS_Manipulator::BehaviorOnTransform behavior;
-					behavior.SetFollowRotation(Standard_True);
-					behavior.SetFollowTranslation(Standard_True);
-					aManipulator->SetTransformBehavior(behavior);
-					aManipulator->Attach(selectedInteractiveObj);
-
-					/// Property widget
-					Handle(AIS_Shape) selectedShape = Handle(AIS_Shape)::DownCast(aManipulator->Object());
-					Part::FeaturePrimitive* selectedPrim = primMapping[selectedShape];
-
-					/// Drawing property list
-					if (selectedPrim != nullptr)
-					{
-						propertyWidget->WritePropertiesToPropWidget(selectedPrim);
-						std::cout << selectedPrim->getViewProviderName() << std::endl;
-					}
-
-				}
-				myContext->NextSelected();
-			}
-
-			// Enable manipulate mode
-			interactiveMode = InterMode::Manipulating;
-		}
-
-		// Exit selection mode
-		if (numSelected == 0 && interactiveMode == InterMode::Manipulating)
-		{
-			interactiveMode = InterMode::Viewing;
-
-			propertyWidget->Clear();
-			aManipulator->Detach();
-			aManipulator->SetModeActivationOnDetection(Standard_True);
-			myView->Redraw();
-		}
-
-		if (numSelected == 1 && interactiveMode == InterMode::Manipulating && aManipulator->HasActiveTransformation())
-		{
-			Handle(AIS_Shape) selectedShape = Handle(AIS_Shape)::DownCast(aManipulator->Object());
-			std::cout << aManipulator->IsModeActivationOnDetection() << std::endl;
-
-			//manipulatorTrsf = aManipulator->Object()->Transformation();
-			BRepBuilderAPI_Transform trsf(selectedShape->Shape(), manipulatorTrsf);
-
-			auto updatedShape = trsf.Shape();
-			selectedShape->Set(updatedShape);
-
-			// TODO: Get full transformation
-			QString primName = "Translation";
-			QIcon primitiveIcon(":/Resources/manipulate.png");
-			QTreeWidget *treeWidget = objectWidget->ui.treeWidget;
-			QTreeWidgetItem *primitiveItem = new QTreeWidgetItem(treeWidget, QStringList(primName));
-			primitiveItem->setIcon(0, primitiveIcon);
-
-			gp_XYZ transPart = manipulatorTrsf.TranslationPart();
-			helm->TransformShape(selectedShape, transPart);
-
-			aManipulator->StopTransform(Standard_True);
-			aManipulator->SetModeActivationOnDetection(Standard_True);
-
-		}
-
 	}
 	else if (theEvent->button() == Qt::MidButton)
 	{
@@ -308,29 +427,6 @@ void OCCOpenGL::mouseReleaseEvent(QMouseEvent* theEvent)
 	}
 	else if (theEvent->button() == Qt::RightButton)
 	{
-		return;
-		inputEvent(theEvent->pos().x(), theEvent->pos().y());
-
-		// select an object if it can be changed by parameters
-		pairParaShape.second = false;
-		myContext->InitSelected();
-
-		auto numSelected = myContext->NbSelected();
-		std::cout << "nb selected: = " << numSelected << std::endl;
-		if (numSelected != 0)
-		{
-			while (myContext->MoreSelected())
-			{
-				if (myContext->HasSelectedShape())
-				{
-					auto selectedInteractiveObj = myContext->SelectedInteractive();
-					pairParaShape.first = selectedInteractiveObj;
-					pairParaShape.second = true;
-				}
-				myContext->NextSelected();
-			}
-		}
-
 		onRButtonUp(theEvent->buttons() | theEvent->modifiers(), theEvent->pos());
 	}
 }
@@ -345,19 +441,43 @@ void OCCOpenGL::wheelEvent(QWheelEvent * theEvent)
 	onMouseWheel(theEvent->buttons(), theEvent->delta(), theEvent->pos());
 }
 
-void OCCOpenGL::onLButtonDown(const int /*theFlags*/, const QPoint thePoint)
+void OCCOpenGL::onLButtonDown(const int theFlags, const QPoint thePoint)
 {
 	// Save the current mouse coordinate in min.
 	myXmin = thePoint.x();
 	myYmin = thePoint.y();
 	myXmax = thePoint.x();
 	myYmax = thePoint.y();
-	std::cout << "Mode " << aManipulator->ActiveMode() << std::endl;
-	if (aManipulator->HasActiveMode())
+
+	switch (myCurrentMode)
 	{
-		aManipulator->SetModeActivationOnDetection(Standard_False);
-		aManipulator->StartTransform(myXmin, myYmin, myView);
-		std::cout << "started" << std::endl;
+	case CurAction3d_Nothing:
+		if (theFlags & Qt::ShiftModifier)
+			multiDragEvent(myXmax, myYmax);
+		else
+			dragEvent(myXmax, myYmax);
+		break;
+	case CurAction3d_DynamicZooming:
+		break;
+	case CurAction3d_WindowZooming:
+		break;
+	case CurAction3d_DynamicPanning:
+		break;
+	case CurAction3d_GlobalPanning:
+		break;
+	case SketcherAction:
+		myView->Convert(myXmin, myYmin, my_v3dX, my_v3dY, my_v3dZ);
+		myView->Proj(projVx, projVy, projVz);
+		mySketcher->OnMouseInputEvent(my_v3dX, my_v3dY, my_v3dZ, projVx, projVy, projVz);
+		break;
+	case CurAction3d_DynamicRotation:
+		if (!myDegenerateModeIsOn)
+			myView->SetComputedMode(Standard_True);
+		myView->StartRotation(thePoint.x(), thePoint.y());
+		break;
+	default:
+		Standard_Failure::Raise("incompatible Current Mode");
+		break;
 	}
 }
 
@@ -379,7 +499,8 @@ void OCCOpenGL::onRButtonDown(const int /*theFlags*/, const QPoint thePoint)
 		myView->StartRotation(thePoint.x(), thePoint.y());
 	}
 }
-
+#include <BRepAdaptor_Surface.hxx>
+#include <GeomAPI_ProjectPointOnSurf.hxx>
 void OCCOpenGL::onLButtonUp(const int theFlags, const QPoint thePoint)
 {
 	// Hide the QRubberBand
@@ -400,8 +521,173 @@ void OCCOpenGL::onLButtonUp(const int theFlags, const QPoint thePoint)
 			inputEvent(thePoint.x(), thePoint.y());
 		}
 	}
+	myContext->InitSelected();
+	auto numSelected = myContext->NbSelected();
+	std::cout << "numSelected = " << numSelected << std::endl;
+
+	if (numSelected == 0)
+	{
+		propertyWidget->Clear();
+	}
+	else if (numSelected == 1)
+	{
+		if (interactiveMode == InterMode::Viewing)
+		{
+			while (myContext->MoreSelected())
+			{
+				if (myContext->HasSelectedShape())
+				{
+					auto selectedInteractiveObj = myContext->SelectedInteractive();
+					if (myContext->SelectedShape().ShapeType() == TopAbs_ShapeEnum::TopAbs_FACE)
+					{
+						curSelectedFace = TopoDS::Face(myContext->SelectedShape());
+					}
+					else
+					{
+						curSelectedFace.Nullify();
+					}
+
+					/// Property widget
+					Handle(AIS_Shape) selectedShape = Handle(AIS_Shape)::DownCast(myContext->SelectedInteractive());
+					Part::FeaturePrimitive* selectedPrim = primMapping[selectedShape];
+
+					/// Drawing property list
+					if (selectedPrim != nullptr)
+					{
+						propertyWidget->WritePropertiesToPropWidget(selectedPrim);
+						std::cout << selectedPrim->getViewProviderName() << std::endl;
+					}
+				}
+				myContext->NextSelected();
+			}
+		}
+	}
+}
 
 
+void OCCOpenGL::action2dSketch()
+{
+	if (curSelectedFace.IsNull()) return;
+
+	bool Reverse = false;
+	if (curSelectedFace.Orientation() == TopAbs_REVERSED)
+		Reverse = true;
+	/// compute mid point of the face
+	myView->Convert(myXmin, myYmin, my_v3dX, my_v3dY, my_v3dZ);
+	myView->Proj(projVx, projVy, projVz);
+	gp_Pnt ObjOrg(projVx, projVy, projVz);
+	/// compute gp_ax3
+	BRepAdaptor_Surface adapt(curSelectedFace);
+	gp_Pln plane = adapt.Plane();
+	Standard_Boolean ok = plane.Direct();
+	if (!ok) {
+		// toggle if plane has a left-handed coordinate system
+		plane.UReverse();
+		Reverse = !Reverse;
+
+	}
+
+	gp_Ax1 Normal = plane.Axis();
+	if (Reverse)
+		Normal.Reverse();
+
+	Handle(Geom_Plane) gPlane = new Geom_Plane(plane);
+	GeomAPI_ProjectPointOnSurf projector(ObjOrg, gPlane);
+	gp_Pnt SketchBasePoint = projector.NearestPoint();
+
+	gp_Dir dir = Normal.Direction();
+	gp_Ax3 SketchPos;
+
+	double cosNX = dir.Dot(gp::DX());
+	double cosNY = dir.Dot(gp::DY());
+	double cosNZ = dir.Dot(gp::DZ());
+	std::vector<double> cosXYZ;
+	cosXYZ.push_back(fabs(cosNX));
+	cosXYZ.push_back(fabs(cosNY));
+	cosXYZ.push_back(fabs(cosNZ));
+
+	int pos = std::max_element(cosXYZ.begin(), cosXYZ.end()) - cosXYZ.begin();
+
+	// +X/-X
+	if (pos == 0) {
+		if (cosNX > 0)
+			SketchPos = gp_Ax3(SketchBasePoint, dir, gp_Dir(0, 1, 0));
+		else
+			SketchPos = gp_Ax3(SketchBasePoint, dir, gp_Dir(0, -1, 0));
+
+	}
+	// +Y/-Y
+	else if (pos == 1) {
+		if (cosNY > 0)
+			SketchPos = gp_Ax3(SketchBasePoint, dir, gp_Dir(-1, 0, 0));
+		else
+			SketchPos = gp_Ax3(SketchBasePoint, dir, gp_Dir(1, 0, 0));
+
+	}
+	// +Z/-Z
+	else {
+		SketchPos = gp_Ax3(SketchBasePoint, dir, gp_Dir(1, 0, 0));
+	}
+
+	/// set coordinate system
+	mySketcher->SetCoordinateSystem(SketchPos);
+	myView->Camera()->SetUp(SketchPos.YDirection());
+	myView->Camera()->SetDirection(-dir);
+	myView->Redraw();
+
+}
+
+void OCCOpenGL::actionLineCutting()
+{
+	action2dSketch();
+	onInputLines();
+	activateCursor(SketcherAction);
+}
+
+void OCCOpenGL::actionCurveCutting()
+{
+	action2dSketch();
+	onInputBezierCurve();
+	activateCursor(SketcherAction);
+}
+
+void OCCOpenGL::initCursors() {
+	if (!defCursor)
+		defCursor = new QCursor(Qt::ArrowCursor);
+	if (!handCursor)
+		handCursor = new QCursor(Qt::PointingHandCursor);
+	if (!panCursor)
+		panCursor = new QCursor(Qt::SizeAllCursor);
+	if (!globPanCursor)
+		globPanCursor = new QCursor(Qt::CrossCursor);
+}
+
+void OCCOpenGL::activateCursor(const CurrentAction3d mode) {
+	switch (mode)
+	{
+	case CurAction3d_DynamicPanning:
+		setCursor(*panCursor);
+		break;
+	case CurAction3d_DynamicZooming:
+		setCursor(*zoomCursor);
+		break;
+	case CurAction3d_DynamicRotation:
+		setCursor(*rotCursor);
+		break;
+	case CurAction3d_GlobalPanning:
+		setCursor(*globPanCursor);
+		break;
+	case CurAction3d_WindowZooming:
+		setCursor(*handCursor);
+		break;
+	case SketcherAction:
+		setCursor(*globPanCursor);
+		break;
+	case CurAction3d_Nothing:
+	default:
+		setCursor(*defCursor);
+		break;
+	}
 }
 
 void OCCOpenGL::onMButtonUp(const int /*theFlags*/, const QPoint thePoint)
@@ -425,6 +711,26 @@ void OCCOpenGL::onRButtonUp(const int /*theFlags*/, const QPoint thePoint)
 	}
 	QAction* openAct = new QAction("Open...", this);
 	menu.addAction(openAct);
+	menu.addSeparator();
+
+	if (!curSelectedFace.IsNull())
+	{
+		openAct = new QAction("Sketch lines on the face", this);
+		connect(openAct, &QAction::triggered, [=]() {
+			
+			actionLineCutting();
+		});
+		menu.addAction(openAct);
+
+		openAct = new QAction("Sketch curves on the face", this);
+		connect(openAct, &QAction::triggered, [=]() {
+
+			actionCurveCutting();
+		});
+		menu.addAction(openAct);
+
+	}
+
 	menu.addSeparator();
 	menu.exec(mapToGlobal(thePoint));
 }
@@ -480,6 +786,14 @@ void OCCOpenGL::onMouseMove(const int theFlags, const QPoint thePoint)
 		default:
 			break;
 		}
+	}
+
+	if (myCurrentMode == SketcherAction)
+	{
+		myView->Convert(thePoint.x(), thePoint.y(), my_v3dX, my_v3dY, my_v3dZ);
+		myView->Proj(projVx, projVy, projVz);
+		mySketcher->OnMouseMoveEvent(my_v3dX, my_v3dY, my_v3dZ, projVx, projVy, projVz);
+		//mySketcher->OnMouseMoveEvent(thePoint.x(), thePoint.y());
 	}
 
 }
@@ -647,9 +961,9 @@ void OCCOpenGL::objSelected()
 {
 	QList<QTreeWidgetItem*> iterList = objectWidget->ui.treeWidget->selectedItems();
 	bool noRealPrimitiveSelected = true;
-	for (auto iter = iterList.begin(); iter != iterList.end(); ++iter)
+	for (auto & iter : iterList)
 	{
-		if (!objMapping[*iter]) continue;
+		if (!objMapping[iter]) continue;
 		noRealPrimitiveSelected = false;
 		break;
 	}
@@ -696,7 +1010,7 @@ void OCCOpenGL::CreateShape(Part::FeaturePrimitive* prim)
 	// 	helm->AssignCreatedShape(prim);
 }
 
-void OCCOpenGL::slotRedraw(void)
+void OCCOpenGL::slotRedraw()
 {
 	Redraw();
 	helm->CompileToHELM();
@@ -729,7 +1043,7 @@ void OCCOpenGL::onLumberLengthChanged(MyLumber* lumber, double length)
 
 }
 
-void OCCOpenGL::Redraw(void)
+void OCCOpenGL::Redraw()
 {
 	myView->Redraw();
 }

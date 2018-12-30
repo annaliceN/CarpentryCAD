@@ -26,7 +26,7 @@
 #include <TopoDS_Edge.hxx>
 #include <BRepBuilderAPI_MakeEdge.hxx>
 
-#define MINIMUMSNAP 25
+#define MINIMUMSNAP 2
 #define	MINANGLE M_PI / 64
 
 class AIS_InteractiveContext;

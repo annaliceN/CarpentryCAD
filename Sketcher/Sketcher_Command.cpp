@@ -10,7 +10,7 @@ Sketcher_Command::Sketcher_Command(const Standard_CString name)
 curCoordinateSystem(gp::XOY())
 {
 	ObjectCounter = 0;
-	myColor = Quantity_NOC_YELLOW;
+	myColor = Quantity_NOC_RED;
 	myType = MainSketcherType;
 	myStyle = Aspect_TOL_SOLID;
 	myWidth = 1.0;
@@ -24,7 +24,7 @@ curCoordinateSystem(gp::XOY())
 	myFirstPoint = new Geom_CartesianPoint(gp::Origin());
 	mySecondPoint = new Geom_CartesianPoint(gp::Origin());
 	myRubberLine = new AIS_Line(myFirstPoint, mySecondPoint);
-	myRubberLine->SetColor(Quantity_NOC_LIGHTPINK1);
+	myRubberLine->SetColor(Quantity_NOC_RED);
 }
 
 /**

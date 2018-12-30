@@ -130,9 +130,11 @@ void OCCWindow::intialize_widget()
 	columnNames.append("Value");
 	propertyWidget->ui.tableWidget->setRowCount(0);
 	propertyWidget->ui.tableWidget->setColumnCount(2);
-	propertyWidget->ui.tableWidget->horizontalHeader()->setStretchLastSection(true);
+	propertyWidget->ui.tableWidget->setColumnWidth(0, 100);
+	propertyWidget->ui.tableWidget->setColumnWidth(1, 100);
+	//propertyWidget->ui.tableWidget->horizontalHeader()->setStretchLastSection(true);
 	propertyWidget->ui.tableWidget->setHorizontalHeaderLabels(columnNames);
-	propertyWidget->setMinimumWidth(400);
+	propertyWidget->setMinimumWidth(200);
 	propertyWidget->setMaximumWidth(400);
 	addDockWidget(Qt::RightDockWidgetArea, propertyWidget);
 
@@ -142,8 +144,6 @@ void OCCWindow::intialize_widget()
 	cad->setMinimumHeight(240);
 	cad->setAllowedAreas(Qt::LeftDockWidgetArea);
 	addDockWidget(Qt::LeftDockWidgetArea, cad);
-
-
 
 	QDockWidget *sr = new QDockWidget(tr("HELM Code"), this);
 	sr->setFeatures(QDockWidget::DockWidgetMovable | QDockWidget::DockWidgetClosable);
@@ -254,6 +254,13 @@ void OCCWindow::createToolBars(void)
 
 	aToolBar->addSeparator();
 	aToolBar->addAction(ui.actionHelix);
+
+	aToolBar = addToolBar(QString("drawing tools"));
+	auto myDrawActions = myOCCOpenGL->getDrawActions();
+	std::cout << myDrawActions->size() << std::endl;
+	for (auto iter = myDrawActions->begin(); iter != myDrawActions->end(); iter++)
+		aToolBar->addAction(*iter);
+
 	
 // 	aToolBar = addToolBar(tr("Help"));
 // 	aToolBar->addAction(ui.actionAbout);

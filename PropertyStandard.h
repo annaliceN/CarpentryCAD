@@ -32,6 +32,7 @@
 #include <vector>
 
 #include "Property.h"
+#include "Vector3D.h"
 
 namespace Base {
 class Writer;
@@ -537,6 +538,100 @@ private:
     std::string _cValue;
 };
 
+/** Bool properties
+* This is the father of all properties handling booleans.
+*/
+class PropertyBool : public Property
+{
+	TYPESYSTEM_HEADER();
+
+public:
+
+	/**
+	* A constructor.
+	* A more elaborate description of the constructor.
+	*/
+	PropertyBool(void);
+
+	/**
+	* A destructor.
+	* A more elaborate description of the destructor.
+	*/
+	virtual ~PropertyBool();
+
+	void setValue(bool lValue);
+	bool getValue(void) const;
+
+	virtual const char* getEditorName(void) const { return "Gui::PropertyEditor::PropertyBoolItem"; }
+
+	virtual void Save(Base::Writer &writer) const;
+	virtual void Restore(Base::XMLReader &reader);
+
+	virtual Property *Copy(void) const;
+	virtual void Paste(const Property &from);
+
+	virtual unsigned int getMemSize(void) const { return sizeof(bool); }
+	
+private:
+	bool _lValue;
+};
+
+class PropertyVectorList : public PropertyLists
+{
+	TYPESYSTEM_HEADER();
+
+public:
+	/**
+	* A constructor.
+	* A more elaborate description of the constructor.
+	*/
+	PropertyVectorList();
+
+	/**
+	* A destructor.
+	* A more elaborate description of the destructor.
+	*/
+	virtual ~PropertyVectorList();
+
+	virtual void setSize(int newSize);
+	virtual int getSize(void) const;
+
+	/** Sets the property
+	*/
+	void setValue(const Base::Vector3d&);
+	void setValue(double x, double y, double z);
+
+	/// index operator
+	const Base::Vector3d& operator[] (const int idx) const {
+		return _lValueList.operator[] (idx);
+	}
+
+	void set1Value(const int idx, const Base::Vector3d& value) {
+		_lValueList.operator[] (idx) = value;
+	}
+
+	void setValues(const std::vector<Base::Vector3d>& values);
+
+	void setValue(void) {}
+
+	const std::vector<Base::Vector3d> &getValues(void) const {
+		return _lValueList;
+	}
+	
+	virtual void Save(Base::Writer &writer) const;
+	virtual void Restore(Base::XMLReader &reader);
+
+	virtual void SaveDocFile(Base::Writer &writer) const;
+	virtual void RestoreDocFile(Base::Reader &reader);
+
+	virtual Property *Copy(void) const;
+	virtual void Paste(const Property &from);
+
+	virtual unsigned int getMemSize(void) const;
+
+private:
+	std::vector<Base::Vector3d> _lValueList;
+};
 
 } // namespace App
 

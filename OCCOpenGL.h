@@ -14,8 +14,14 @@
 #include "ObjectWidget.h"
 #include "FeatureBox.h"
 
+#include <Sketcher.h>
+#include <Sketcher_QtGUI.h>
+
 class QMenu;
 class QRubberBand;
+
+#define GRID1 Aspect_GT_Rectangular, Aspect_GDM_Lines
+#define GRID2 Aspect_GT_Circular, Aspect_GDM_Points
 
 //! adapted a QGLWidget for OpenCASCADE viewer.
 class OCCOpenGL : public QGLWidget
@@ -31,13 +37,34 @@ public:
         CurAction3d_WindowZooming,
         CurAction3d_DynamicPanning,
         CurAction3d_GlobalPanning,
-        CurAction3d_DynamicRotation
+        CurAction3d_DynamicRotation,
+		SketcherAction
     };
 
 	enum InterMode
 	{
 		Viewing,
 		Manipulating	
+	};
+
+	enum DrawAction {
+		MyEraseActionId,
+		MyDeleteActionId,
+		MyPropertyActionId,
+		MyRedrawActionId,
+		MyChangePlaneAction,
+		MyGridActionId,
+		MyInputPointAction,
+		MyInputLineAction,
+		MyInputCircleAction,
+		MyInputCircle3PAction,
+		MyInputCircle2PTanAction,
+		MyInputCircleP2TanAction,
+		MyInputCircle3TanAction,
+		MyInputArc3PAction,
+		MyInputArcCenter2PAction,
+		MyInputBezierCurveAction,
+		MyTrimCurveAction
 	};
 
 public:
@@ -49,6 +76,7 @@ public:
 	PHELM* getHELM() { return helm; };
 	MyPropertyWidget* getPropertyWidget() { return propertyWidget; };
 	MyObjectWidget* getObjectWidget() { return objectWidget; };
+	QList<QAction*>* getDrawActions();
 
 	// Geometric operations
 	void FuseSelected();
@@ -68,6 +96,22 @@ public slots:
 	void Redraw(void);
 	void CreateShape(Part::FeaturePrimitive* prim);
 	void slotRedraw(void);
+	void onDeleteSelected();
+	void onProperty();
+	void onRedrawAll();
+	void onChangePlane();
+	void onGrid();
+	void onInputPoints();
+	void onInputLines();
+	void onInputCircles();
+	void onInputCircles3P();
+	void onInputCircles2PTan();
+	void onInputCirclesP2Tan();
+	void onInputCircles3Tan();
+	void onInputArc3P();
+	void onInputArcCenter2P();
+	void onInputBezierCurve();
+	void onTrimCurve();
 
 protected:
     // Paint events.
@@ -86,6 +130,11 @@ protected:
     virtual void onRButtonDown(const int theFlags, const QPoint thePoint);
     virtual void onMouseWheel(const int theFlags, const int theDelta, const QPoint thePoint);
     virtual void onLButtonUp(const int theFlags, const QPoint thePoint);
+	void actionLineCutting();
+	void action2dSketch();
+	void actionCurveCutting();
+	void initCursors();
+	void activateCursor(const CurrentAction3d mode);
     virtual void onMButtonUp(const int theFlags, const QPoint thePoint);
     virtual void onRButtonUp(const int theFlags, const QPoint thePoint);
     virtual void onMouseMove(const int theFlags, const QPoint thePoint);
@@ -95,6 +144,7 @@ protected:
 
 protected:
     void init(void);
+	void initDrawActions();
 	void ApplyConnections();
     void popup(const int x, const int y);
     void dragEvent(const int x, const int y);
@@ -128,6 +178,7 @@ private:
 
     //! the mouse current mode.
     CurrentAction3d myCurrentMode;
+	TopoDS_Face curSelectedFace;
 
     //! save the degenerate mode state.
     Standard_Boolean myDegenerateModeIsOn;
@@ -142,14 +193,24 @@ private:
 
 	// HELM 
 	PHELM *helm;
+	Sketcher* mySketcher;
 
 	// PropertyWidget
 	MyPropertyWidget *propertyWidget;
 	MyObjectWidget *objectWidget;
-
+	QList<QAction *> *myDrawActions;
 	std::unordered_map< QTreeWidgetItem*, void* > objMapping;
-
+	bool GRIDCounter;
 	std::map< Handle(AIS_Shape), Part::FeaturePrimitive*> primMapping;
+	V3d_Coordinate my_v3dX, my_v3dY, my_v3dZ;
+	Quantity_Parameter projVx, projVy, projVz;
+
+	QCursor* defCursor = NULL;
+	QCursor* handCursor = NULL;
+	QCursor* panCursor = NULL;
+	QCursor* globPanCursor = NULL;
+	QCursor* zoomCursor = NULL;
+	QCursor* rotCursor = NULL;
 };
 
 #endif 

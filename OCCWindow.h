@@ -73,12 +73,9 @@ private:
 	Highlighter *highlighter;
 	OCCDomainLang *DSL;
 
-
 	// primitives
 	TopoDS_Shape aTopoBox;
-
 	std::vector<Handle(AIS_Shape)> vecShapes;
-
 };
 
 #endif

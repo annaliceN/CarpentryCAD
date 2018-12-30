@@ -577,3 +577,159 @@ unsigned int PropertyString::getMemSize (void) const
 {
     return static_cast<unsigned int>(_cValue.size());
 }
+
+
+
+//**************************************************************************
+//**************************************************************************
+// PropertyBool
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+TYPESYSTEM_SOURCE(App::PropertyBool, App::Property);
+
+//**************************************************************************
+// Construction/Destruction
+
+PropertyBool::PropertyBool()
+{
+	_lValue = false;
+}
+
+PropertyBool::~PropertyBool()
+{
+
+}
+
+//**************************************************************************
+// Setter/getter for the property
+
+void PropertyBool::setValue(bool lValue)
+{
+	aboutToSetValue();
+	_lValue = lValue;
+	hasSetValue();
+}
+
+bool PropertyBool::getValue(void) const
+{
+	return _lValue;
+}
+
+void PropertyBool::Save(Base::Writer &writer) const
+{
+	
+}
+
+void PropertyBool::Restore(Base::XMLReader &reader)
+{
+	
+}
+
+
+Property *PropertyBool::Copy(void) const
+{
+	PropertyBool *p = new PropertyBool();
+	p->_lValue = _lValue;
+	return p;
+}
+
+void PropertyBool::Paste(const Property &from)
+{
+	aboutToSetValue();
+	_lValue = dynamic_cast<const PropertyBool&>(from)._lValue;
+	hasSetValue();
+}
+
+//**************************************************************************
+// PropertyVectorList
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+TYPESYSTEM_SOURCE(App::PropertyVectorList, App::PropertyLists);
+
+//**************************************************************************
+// Construction/Destruction
+
+PropertyVectorList::PropertyVectorList()
+{
+
+}
+
+PropertyVectorList::~PropertyVectorList()
+{
+
+}
+
+//**************************************************************************
+// Base class implementer
+
+void PropertyVectorList::setSize(int newSize)
+{
+	_lValueList.resize(newSize);
+}
+
+int PropertyVectorList::getSize(void) const
+{
+	return static_cast<int>(_lValueList.size());
+}
+
+void PropertyVectorList::setValue(const Base::Vector3d& lValue)
+{
+	aboutToSetValue();
+	_lValueList.resize(1);
+	_lValueList[0] = lValue;
+	hasSetValue();
+}
+
+void PropertyVectorList::setValue(double x, double y, double z)
+{
+	aboutToSetValue();
+	_lValueList.resize(1);
+	_lValueList[0].Set(x, y, z);
+	hasSetValue();
+}
+
+void PropertyVectorList::setValues(const std::vector<Base::Vector3d>& values)
+{
+	aboutToSetValue();
+	_lValueList = values;
+	hasSetValue();
+}
+
+void PropertyVectorList::Save(Base::Writer &writer) const
+{
+	
+}
+
+void PropertyVectorList::Restore(Base::XMLReader &reader)
+{
+	
+}
+
+void PropertyVectorList::SaveDocFile(Base::Writer &writer) const
+{
+
+}
+
+void PropertyVectorList::RestoreDocFile(Base::Reader &reader)
+{
+	
+}
+
+Property *PropertyVectorList::Copy(void) const
+{
+	PropertyVectorList *p = new PropertyVectorList();
+	p->_lValueList = _lValueList;
+	return p;
+}
+
+void PropertyVectorList::Paste(const Property &from)
+{
+	aboutToSetValue();
+	_lValueList = dynamic_cast<const PropertyVectorList&>(from)._lValueList;
+	hasSetValue();
+}
+
+unsigned int PropertyVectorList::getMemSize(void) const
+{
+	return static_cast<unsigned int>(_lValueList.size() * sizeof(Base::Vector3d));
+}

@@ -10,6 +10,7 @@ Sketcher_CommandLine2P::Sketcher_CommandLine2P()
 : Sketcher_Command("Line2P.")
 {
 	myLine2PAction = Nothing;
+	//myContext->Display(myRubberLine, Standard_True);
 }
 
 
@@ -57,11 +58,13 @@ Standard_Boolean Sketcher_CommandLine2P::MouseInputEvent(const gp_Pnt2d& thePnt2
 		curPnt2d = myAnalyserSnap->MouseInputException(myFirstgp_Pnt2d, thePnt2d, Line_SecondPnt, Standard_False);
 
 		Handle(Geom2d_Edge) newGeom2d_Edge = new Geom2d_Edge();
+
 		if (newGeom2d_Edge->SetPoints(myFirstgp_Pnt2d, curPnt2d))
 		{
 			Handle(Geom_CartesianPoint) Geom_Point1 = new Geom_CartesianPoint(ElCLib::To3d(curCoordinateSystem.Ax2(), myFirstgp_Pnt2d));
 			Handle(Geom_CartesianPoint) Geom_Point2 = new Geom_CartesianPoint(ElCLib::To3d(curCoordinateSystem.Ax2(), curPnt2d));
 			Handle(AIS_Line) myAIS_Line = new AIS_Line(Geom_Point1, Geom_Point2);
+			myAIS_Line->SetColor(Quantity_NOC_RED);
 			AddObject(newGeom2d_Edge, myAIS_Line, LineSketcherObject);
 
 			myContext->Display(myAIS_Line, Standard_True);
@@ -94,7 +97,6 @@ Standard_Boolean Sketcher_CommandLine2P::MouseInputEvent(const gp_Pnt2d& thePnt2
 */
 void Sketcher_CommandLine2P::MouseMoveEvent(const gp_Pnt2d& thePnt2d)
 {
-	std::cout << myLine2PAction << std::endl;
 	switch (myLine2PAction)
 	{
 	case Nothing:break;
@@ -103,8 +105,8 @@ void Sketcher_CommandLine2P::MouseMoveEvent(const gp_Pnt2d& thePnt2d)
 		curPnt2d = myAnalyserSnap->MouseMoveException(thePnt2d, thePnt2d, Line_FirstPnt, Standard_True);
 		break;
 	case Input_SecondPointLine:
-		curPnt2d = myAnalyserSnap->MouseMoveException(myFirstgp_Pnt2d, thePnt2d, Line_SecondPnt, Standard_False);
 		mySecondPoint->SetPnt(ElCLib::To3d(curCoordinateSystem.Ax2(), curPnt2d));
+		curPnt2d = myAnalyserSnap->MouseMoveException(myFirstgp_Pnt2d, thePnt2d, Line_SecondPnt, Standard_False);
 		myRubberLine->SetPoints(myFirstPoint, mySecondPoint);
 		myContext->Redisplay(myRubberLine, Standard_True);
 		break;
