@@ -43,17 +43,14 @@ void MyPropertyWidget::WritePropertiesToPropWidget(Part::FeaturePrimitive* primi
 	Clear();
 	curPrimitive = primitive;
 	// set property widget
-	const auto primName = primitive->getViewProviderName();
-	
-	if (primName == "Box")
+	if (primitive->getTypeId() == Part::FeatureBox::getClassTypeId() || primitive->getTypeId() == Part::FeatureCylinder::getClassTypeId())
 	{
-		WriteBoxProperties(static_cast<Part::FeatureBox*>(primitive));
+		WritePrimitiveProperties(primitive);
 	}
-
 }
 
 
-void MyPropertyWidget::WriteBoxProperties(Part::FeatureBox* box)
+void MyPropertyWidget::WritePrimitiveProperties(Part::FeaturePrimitive* box)
 {
 	QTableWidget *tableWidget = ui.tableWidget;
 	tableWidget->setRowCount(13);
@@ -128,7 +125,7 @@ void MyPropertyWidget::WriteBoxProperties(Part::FeatureBox* box)
 
 	for (auto & p : pList)
 	{
-		if (p->getTypeId() == App::PropertyFloat::getClassTypeId())
+		if (p->getTypeId().isDerivedFrom(App::PropertyFloat::getClassTypeId()))
 		{
 			App::PropertyFloat* pf = static_cast<App::PropertyFloat*>(p);
 			tableWidgetItem = new QTableWidgetItem(pf->getName());
@@ -150,7 +147,6 @@ void MyPropertyWidget::WriteBoxProperties(Part::FeatureBox* box)
 		}
 	}
 }
-
 
 void MyPropertyWidget::ShowColorSelection()
 {

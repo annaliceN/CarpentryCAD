@@ -44,7 +44,7 @@ public slots:
 private:
 	void InsertItem(QTableWidgetItem* item, int rowIndex, int columnIndex);
 	void InsertMergeRow(QTableWidgetItem* item, int rowIndex);
-	void WriteBoxProperties(Part::FeatureBox* box);
+	void WritePrimitiveProperties(Part::FeaturePrimitive* box);
 	void WriteCylinderProperties(MyCylinder* cylinder);
 	void UpdateBoxProperties(MyBox * box);
 	// 	void WritePartialCylinderProperties(MyPartialCylinder* cylinder);

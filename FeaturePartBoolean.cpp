@@ -25,7 +25,6 @@ FeaturePartBoolean::~FeaturePartBoolean()
 
 }
 
-
 short FeaturePartBoolean::mustExecute() const
 {
 	if (ToolFeature.getValue() && ToolFeature.getValue()) {
@@ -93,6 +92,9 @@ bool FeaturePartBoolean::execute(void)
 #endif
 		this->Shape.setValue(resShape);
 		this->History.setValues(history);
+
+		if (GraphicShape.IsNull()) BuildGraphicShape();
+
 		return true;
 	}
 	catch (...) {

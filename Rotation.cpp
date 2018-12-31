@@ -498,7 +498,7 @@ Rotation Rotation::makeRotationByAxes(Vector3d xdir, Vector3d ydir, Vector3d zdi
 		else
 			dropPriority(0);
 		if (i == 2)
-			assert(false&"makeRotationByAxes: all directions supplied are zero");
+			assert(false&&"makeRotationByAxes: all directions supplied are zero");
 	}
 	mainDir.Normalize();
 

@@ -24,7 +24,9 @@ namespace Part
 
 		/// returns the type name of the ViewProvider
 		virtual const char* getViewProviderName(void) const;
+		virtual bool execute(void);
 		virtual void onChanged(const App::Property* prop);
+
 		TopLoc_Location getLocation() const;
 		bool isRecomputing();
 

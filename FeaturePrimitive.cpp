@@ -29,11 +29,15 @@ FeaturePrimitive::FeaturePrimitive()
 
 FeaturePrimitive::~FeaturePrimitive()
 {
+
 }
 
 short FeaturePrimitive::mustExecute(void) const
 {
-	return 0;
+	if (Shape.isTouched() || Placement.isTouched())
+		return 1;
+	else
+		return 0;
 }
 
 void Part::FeaturePrimitive::onChanged(const App::Property * prop)
@@ -59,9 +63,13 @@ void Part::FeaturePrimitive::onChanged(const App::Property * prop)
 			}
 		}
 	}
-
-	GraphicShape->SetShape(this->Shape.getValue());
-	GraphicShape->Redisplay();
+	
+	if (!GraphicShape.IsNull())
+	{
+		GraphicShape->SetShape(this->Shape.getValue());
+		GraphicShape->Redisplay();
+	}
+	
 }
 
 TopLoc_Location FeaturePrimitive::getLocation() const
@@ -152,6 +160,12 @@ ShapeHistory FeaturePrimitive::buildHistory(BRepBuilderAPI_MakeShape& mkShape, T
 
 const char* FeaturePrimitive::getViewProviderName(void) const {
 	return "PartGui::ViewProviderPart";
+}
+
+bool Part::FeaturePrimitive::execute(void)
+{
+	this->Shape.touch();
+	return true;
 }
 
 ShapeHistory FeaturePrimitive::joinHistory(const ShapeHistory& oldH, const ShapeHistory& newH)

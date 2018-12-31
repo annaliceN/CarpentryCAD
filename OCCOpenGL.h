@@ -13,6 +13,8 @@
 #include "PropertyWidget.h"
 #include "ObjectWidget.h"
 #include "FeatureBox.h"
+#include "Property.h"
+#include "PropertyFeature.h"
 
 #include <Sketcher.h>
 #include <Sketcher_QtGUI.h>
@@ -192,6 +194,7 @@ private:
 	std::pair<Handle(AIS_InteractiveObject), bool> pairParaShape;
 
 	int interactiveMode;
+	bool GRIDCounter;
 
 	// HELM 
 	PHELM *helm;
@@ -202,8 +205,8 @@ private:
 	MyObjectWidget *objectWidget;
 	QList<QAction *> *myDrawActions;
 	std::unordered_map< QTreeWidgetItem*, void* > objMapping;
-	bool GRIDCounter;
-	std::map< Handle(AIS_Shape), Part::FeaturePrimitive*> primMapping;
+	std::map< Handle(AIS_Shape), App::Property*> primMapping;
+	std::vector< Part::PropertyFeature*> featureWorkSpace;
 	V3d_Coordinate my_v3dX, my_v3dY, my_v3dZ;
 	Quantity_Parameter projVx, projVy, projVz;
 

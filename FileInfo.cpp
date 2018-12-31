@@ -460,7 +460,7 @@ bool FileInfo::deleteFile(void) const
 #elif defined (FC_OS_LINUX) || defined(FC_OS_CYGWIN) || defined(FC_OS_MACOSX) || defined(FC_OS_BSD)
     return (::remove(FileName.c_str())==0);
 #else
-#   error "FileInfo::deleteFile() not implemented for this platform!"
+//#   error "FileInfo::deleteFile() not implemented for this platform!"
 #endif
 }
 

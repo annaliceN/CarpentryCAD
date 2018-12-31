@@ -552,7 +552,7 @@ void OCCOpenGL::onLButtonUp(const int theFlags, const QPoint thePoint)
 
 					/// Property widget
 					Handle(AIS_Shape) selectedShape = Handle(AIS_Shape)::DownCast(myContext->SelectedInteractive());
-					Part::FeaturePrimitive* selectedPrim = primMapping[selectedShape];
+					Part::FeaturePrimitive* selectedPrim = dynamic_cast<Part::PropertyFeature*>(primMapping[selectedShape])->getValue();
 
 					/// Drawing property list
 					if (selectedPrim != nullptr)
@@ -643,9 +643,75 @@ void OCCOpenGL::actionStart2dSketch()
 
 }
 
+void OCCOpenGL::objSelected()
+{
+	QList<QTreeWidgetItem*> iterList = objectWidget->ui.treeWidget->selectedItems();
+	bool noRealPrimitiveSelected = true;
+	for (auto iter = iterList.begin(); iter != iterList.end(); ++iter)
+	{
+		if (!objMapping[*iter]) continue;
+		noRealPrimitiveSelected = false;
+		break;
+	}
+	if (noRealPrimitiveSelected) {
+		//curselectedprimitive = NULL;
+	}
+
+	// set selected highLighted
+	for (int i = 0; i < iterList.size(); ++i)
+	{
+		void *objOrPrimitive = objMapping[iterList[i]];
+		if (objOrPrimitive == NULL) continue;
+		Part::FeaturePrimitive* prim = static_cast<Part::FeaturePrimitive*>(objOrPrimitive);
+		propertyWidget->WritePropertiesToPropWidget(prim);
+		/*
+		if (objOrPrimitive == mesh)
+		{
+			glWidget->highLightMesh = true;
+			propertyWidget->WritePropertiesToPropWidget(mesh);
+		}
+		else if (mergedPrimitives.find((CorkTriMesh*)objOrPrimitive) != mergedPrimitives.end())
+		{
+			propertyWidget->WritePropertiesToPropWidget((CorkTriMesh*)objOrPrimitive);
+		}
+		else
+		{
+			MyPrimitive *primitive = (MyPrimitive*)objOrPrimitive;
+			primitive->highLighted = true;
+			glWidget->selectedPrimitive = primitive;
+			propertyWidget->WritePropertiesToPropWidget((MyPrimitive*)objOrPrimitive);
+		}
+		*/
+	}
+	this->update();
+}
+
+#include "FeaturePartCut.h"
 void OCCOpenGL::actionComplete2dSketch()
 {
+	Part::PropertyFeature* pf = new Part::PropertyFeature;
+	Part::FeatureCut* fCut = new Part::FeatureCut;
+	pf->setValue(fCut);
+	featureWorkSpace.push_back(pf);
 
+	int cnt = 0;
+	std::cout << primMapping.size() << std::endl;
+	for (auto p : primMapping)
+	{
+		std::cout << p.second;
+		if (cnt == 0)
+			fCut->BaseFeature.setValue(dynamic_cast<Part::PropertyFeature*>(p.second)->getValue());
+		else
+			fCut->ToolFeature.setValue(dynamic_cast<Part::PropertyFeature*>(p.second)->getValue());
+		cnt++;
+	}
+	
+	fCut->execute();
+
+	auto cutGraphicShape = fCut->getGraphicShape();
+	myContext->Remove(fCut->BaseFeature.getValue()->getGraphicShape(), Standard_True);
+	myContext->Remove(fCut->ToolFeature.getValue()->getGraphicShape(), Standard_True);
+	myContext->Display(cutGraphicShape, Standard_True);
 	/// stop sketching
 	actionStop2dSketch();
 }
@@ -730,10 +796,18 @@ void OCCOpenGL::onRButtonUp(const int /*theFlags*/, const QPoint thePoint)
 		QAction* paramAct = new QAction("Set its parameters", this);
 		menu.addAction(paramAct);
 	}
-	QAction* openAct = new QAction("Open...", this);
+	QAction* openAct = new QAction("Recompute", this);
+	connect(openAct, &QAction::triggered, [=]() {
+		for (auto f : featureWorkSpace)
+		{
+			std::cout << "mustExecute? " << f->getValue()->mustExecute() << std::endl;
+			if (f->getValue()->mustExecute()) f->getValue()->execute();
+		}
+		Redraw();
+	});
 	menu.addAction(openAct);
 	menu.addSeparator();
-
+	
 	if (!curSelectedFace.IsNull())
 	{
 		openAct = new QAction("Sketch lines on the face", this);
@@ -867,7 +941,6 @@ void OCCOpenGL::addItemInPopup(QMenu* /*theMenu*/)
 
 }
 
-
 void OCCOpenGL::dragEvent(const int x, const int y)
 {
 	myContext->Select(myXmin, myYmin, x, y, myView, Standard_True);
@@ -999,25 +1072,15 @@ void OCCOpenGL::IntersectSelected()
 	}
 }
 
-void OCCOpenGL::objSelected()
-{
-	QList<QTreeWidgetItem*> iterList = objectWidget->ui.treeWidget->selectedItems();
-	bool noRealPrimitiveSelected = true;
-	for (auto & iter : iterList)
-	{
-		if (!objMapping[iter]) continue;
-		noRealPrimitiveSelected = false;
-		break;
-	}
-}
-
 void OCCOpenGL::CreateShape(Part::FeaturePrimitive* prim)
 {
-	/// allocate mapping
-	primMapping[prim->getGraphicShape()] = prim;
-	getContext()->Display(prim->getGraphicShape(), Standard_True);
-
 	if (prim == nullptr) return;
+	Part::PropertyFeature* pf = new Part::PropertyFeature;
+	pf->setValue(prim);
+	/// allocate mapping
+	primMapping[prim->getGraphicShape()] = pf;
+	getContext()->Display(prim->getGraphicShape(), Standard_True);
+	
 
 	QString primName;
 	QIcon primitiveIcon;
@@ -1027,29 +1090,18 @@ void OCCOpenGL::CreateShape(Part::FeaturePrimitive* prim)
 		primName = QString("Box ") + helm->AssignCreatedShape(prim);
 		primitiveIcon.addFile(":/Resources/cube_crop.png");
 	}
+	else if (prim->getTypeId() == Part::FeatureCylinder::getClassTypeId())
+	{
+		primName = QString("Cylinder ") + helm->AssignCreatedShape(prim);
+		primitiveIcon.addFile(":/Resources/cylinder_crop.png");
+	}
+
 	QTreeWidget *treeWidget = objectWidget->ui.treeWidget;
 	QTreeWidgetItem *primitiveItem = new QTreeWidgetItem(treeWidget, QStringList(primName));
 	primitiveItem->setIcon(0, primitiveIcon);
 
-	// 	switch (prim->pType)
-	// 	{
-	// 	case PrimType::Lumber:
-	// 		primName = "Create Lumber";
-	// 		primitiveIcon.addFile(":/Resources/lumber.png");
-	// 		break;
-	// 	case PrimType::Box:
-	// 		primName = "Box";
-	// 		primitiveIcon.addFile(":/Resources/cube_crop.png");
-	// 		break;
-	// 	case PrimType::Cylinder:
-	// 		primName = "Cylinder";
-	// 		primitiveIcon.addFile(":/Resources/cylinder_crop.png");
-	// 		break;
-	// 	}
-	// 
-
-	// 
-	// 	helm->AssignCreatedShape(prim);
+	featureWorkSpace.push_back(pf);
+	objMapping[primitiveItem] = prim;
 }
 
 void OCCOpenGL::slotRedraw()
@@ -1068,7 +1120,6 @@ void OCCOpenGL::onLumberLengthChanged(MyLumber* lumber, double length)
 		Handle(AIS_InteractiveObject) firstInterObj = iter.Value();
 		if (lumber->getGraphicShape() == Handle(AIS_Shape)::DownCast(firstInterObj))
 		{
-			double scaleRatio = length;
 			gp_GTrsf scaleTrsf = gp_GTrsf();
 			gp_Mat rot(1.0, 0, 0, 0, 1.0, 0, 0, 0, length);
 			scaleTrsf.SetVectorialPart(rot);

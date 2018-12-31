@@ -301,10 +301,18 @@ void OCCWindow::on_action_make_box()
 {
 	Part::FeatureBox* box = new Part::FeatureBox;
 	Handle(AIS_Shape) boxShape = box->BuildGraphicShape();
-	
 	boxShape->SetColor(Quantity_NOC_GOLD);
-
 	myOCCOpenGL->CreateShape(box);
+}
+
+void OCCWindow::on_action_make_cylinder()
+{
+	Part::FeatureCylinder* cylinder = new Part::FeatureCylinder;
+	if (cylinder->mustExecute()) cylinder->execute();
+	Handle(AIS_Shape) cylinderShape = cylinder->BuildGraphicShape(); 
+	cylinderShape->SetColor(Quantity_NOC_GOLD);
+	myOCCOpenGL->CreateShape(cylinder);
+
 }
 
 void OCCWindow::on_action_make_cone()
@@ -333,10 +341,6 @@ void OCCWindow::on_action_make_sphere()
 	myOCCOpenGL->getContext()->Display(anAisSphere, Standard_True);
 }
 
-void OCCWindow::on_action_make_cylinder()
-{
-
-}
 
 void OCCWindow::on_action_fuse()
 {
