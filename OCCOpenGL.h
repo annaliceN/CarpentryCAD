@@ -130,8 +130,10 @@ protected:
     virtual void onRButtonDown(const int theFlags, const QPoint thePoint);
     virtual void onMouseWheel(const int theFlags, const int theDelta, const QPoint thePoint);
     virtual void onLButtonUp(const int theFlags, const QPoint thePoint);
+	void actionStart2dSketch();
+	void actionComplete2dSketch();
+	void actionStop2dSketch();
 	void actionLineCutting();
-	void action2dSketch();
 	void actionCurveCutting();
 	void initCursors();
 	void activateCursor(const CurrentAction3d mode);
@@ -211,6 +213,8 @@ private:
 	QCursor* globPanCursor = NULL;
 	QCursor* zoomCursor = NULL;
 	QCursor* rotCursor = NULL;
+
+	Handle(Graphic3d_Camera) myPreviousCam;
 };
 
 #endif 

@@ -13,6 +13,8 @@ namespace Part
 
 		App::PropertyFloat Length, Height, Width;
 
+		short mustExecute() const;
+
 		bool execute(void);
 
 		const char* getViewProviderName(void) const {

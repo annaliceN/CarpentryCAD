@@ -34,7 +34,6 @@
 
 namespace Part
 {
-
 	/** The part shape property class.
 	* @author Werner Mayer
 	*/
@@ -102,6 +101,49 @@ namespace Part
 	};
 
 
+	class PropertyShapeHistory : public App::PropertyLists
+	{
+		TYPESYSTEM_HEADER();
+
+	public:
+		PropertyShapeHistory();
+		~PropertyShapeHistory();
+
+		virtual void setSize(int newSize) {
+			_lValueList.resize(newSize);
+		}
+		virtual int getSize(void) const {
+			return _lValueList.size();
+		}
+
+		/** Sets the property
+		*/
+		void setValue(const ShapeHistory&);
+
+		void setValues(const std::vector<ShapeHistory>& values);
+
+		const std::vector<ShapeHistory> &getValues(void) const {
+			return _lValueList;
+		}
+
+
+		virtual void Save(Base::Writer &writer) const;
+		virtual void Restore(Base::XMLReader &reader);
+
+		virtual void SaveDocFile(Base::Writer &writer) const;
+		virtual void RestoreDocFile(Base::Reader &reader);
+
+		virtual Property *Copy(void) const;
+		virtual void Paste(const Property &from);
+
+		virtual unsigned int getMemSize(void) const {
+			return _lValueList.size() * sizeof(ShapeHistory);
+		}
+
+	private:
+		std::vector<ShapeHistory> _lValueList;
+	};
+
 	class PropertyPlacement : public App::Property
 	{
 		TYPESYSTEM_HEADER();
@@ -145,6 +187,7 @@ namespace Part
 	private:
 		Base::Placement _cPos;
 	};
+
 } //namespace Part
 
 

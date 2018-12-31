@@ -34,7 +34,6 @@ namespace Part
 
 		PropertyPlacement* getPlacement() { return &Placement; }
 
-	protected:
 		ShapeHistory buildHistory(BRepBuilderAPI_MakeShape&, TopAbs_ShapeEnum type,
 			const TopoDS_Shape& newS, const TopoDS_Shape& oldS);
 		ShapeHistory joinHistory(const ShapeHistory&, const ShapeHistory&);

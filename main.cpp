@@ -19,8 +19,10 @@ int main(int argc, char *argv[])
 #include "Persistence.h"
 #include "TopoShape.h"
 #include "PropertyContainer.h"
+#include "PropertyFeature.h"
 #include "FeaturePrimitive.h"
 #include "FeatureBox.h"
+
 
 void InitComponents()
 {
@@ -35,6 +37,10 @@ void InitComponents()
 	App::PropertyFloat::init();
 	App::PropertyFloatConstraint::init();
 	App::PropertyFloatList::init();
+	Part::PropertyPlacement::init();
+	Part::PropertyPartShape::init();
+	Part::PropertyFeature::init();
+	Part::PropertyShapeHistory::init();
 	Part::FeaturePrimitive::init();
 	Part::FeatureBox::init();
 }

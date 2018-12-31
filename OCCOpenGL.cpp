@@ -483,7 +483,8 @@ void OCCOpenGL::onLButtonDown(const int theFlags, const QPoint thePoint)
 
 void OCCOpenGL::onMButtonDown(const int /*theFlags*/, const QPoint thePoint)
 {
-
+	myXmax = thePoint.x();
+	myYmax = thePoint.y();
 }
 
 void OCCOpenGL::onRButtonDown(const int /*theFlags*/, const QPoint thePoint)
@@ -509,6 +510,8 @@ void OCCOpenGL::onLButtonUp(const int theFlags, const QPoint thePoint)
 		myRectBand->hide();
 	}
 
+	if (myCurrentMode == SketcherAction) return;
+
 	// Ctrl for multi selection.
 	if (thePoint.x() == myXmin && thePoint.y() == myYmin)
 	{
@@ -528,6 +531,10 @@ void OCCOpenGL::onLButtonUp(const int theFlags, const QPoint thePoint)
 	if (numSelected == 0)
 	{
 		propertyWidget->Clear();
+		if (!curSelectedFace.IsNull())
+		{
+			curSelectedFace.Nullify();
+		}
 	}
 	else if (numSelected == 1)
 	{
@@ -541,10 +548,6 @@ void OCCOpenGL::onLButtonUp(const int theFlags, const QPoint thePoint)
 					if (myContext->SelectedShape().ShapeType() == TopAbs_ShapeEnum::TopAbs_FACE)
 					{
 						curSelectedFace = TopoDS::Face(myContext->SelectedShape());
-					}
-					else
-					{
-						curSelectedFace.Nullify();
 					}
 
 					/// Property widget
@@ -565,9 +568,10 @@ void OCCOpenGL::onLButtonUp(const int theFlags, const QPoint thePoint)
 }
 
 
-void OCCOpenGL::action2dSketch()
+void OCCOpenGL::actionStart2dSketch()
 {
 	if (curSelectedFace.IsNull()) return;
+	myCurrentMode = SketcherAction;
 
 	bool Reverse = false;
 	if (curSelectedFace.Orientation() == TopAbs_REVERSED)
@@ -631,22 +635,39 @@ void OCCOpenGL::action2dSketch()
 
 	/// set coordinate system
 	mySketcher->SetCoordinateSystem(SketchPos);
+	myPreviousCam = new Graphic3d_Camera;
+	myPreviousCam->Copy(myView->Camera());
 	myView->Camera()->SetUp(SketchPos.YDirection());
 	myView->Camera()->SetDirection(-dir);
 	myView->Redraw();
 
 }
 
+void OCCOpenGL::actionComplete2dSketch()
+{
+
+	/// stop sketching
+	actionStop2dSketch();
+}
+
+void OCCOpenGL::actionStop2dSketch()
+{
+	myCurrentMode = CurAction3d_Nothing;
+	activateCursor(myCurrentMode);
+	myView->SetCamera(myPreviousCam);
+	myView->Redraw();
+}
+
 void OCCOpenGL::actionLineCutting()
 {
-	action2dSketch();
+	actionStart2dSketch();
 	onInputLines();
 	activateCursor(SketcherAction);
 }
 
 void OCCOpenGL::actionCurveCutting()
 {
-	action2dSketch();
+	actionStart2dSketch();
 	onInputBezierCurve();
 	activateCursor(SketcherAction);
 }
@@ -729,6 +750,20 @@ void OCCOpenGL::onRButtonUp(const int /*theFlags*/, const QPoint thePoint)
 		});
 		menu.addAction(openAct);
 
+		if (myCurrentMode == SketcherAction)
+		{
+			openAct = new QAction("Complete sketching", this);
+			connect(openAct, &QAction::triggered, [=]() {
+				actionComplete2dSketch();
+			});
+			menu.addAction(openAct);
+
+			openAct = new QAction("Stop sketching", this);
+			connect(openAct, &QAction::triggered, [=]() {
+				actionStop2dSketch();
+			});
+			menu.addAction(openAct);
+		}
 	}
 
 	menu.addSeparator();
@@ -786,6 +821,13 @@ void OCCOpenGL::onMouseMove(const int theFlags, const QPoint thePoint)
 		default:
 			break;
 		}
+	}
+
+	if (theFlags & Qt::MiddleButton)
+	{
+		myView->Pan(thePoint.x() - myXmax, myYmax - thePoint.y());
+		myXmax = thePoint.x();
+		myYmax = thePoint.y();
 	}
 
 	if (myCurrentMode == SketcherAction)

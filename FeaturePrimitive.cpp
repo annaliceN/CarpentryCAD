@@ -62,7 +62,6 @@ void Part::FeaturePrimitive::onChanged(const App::Property * prop)
 
 	GraphicShape->SetShape(this->Shape.getValue());
 	GraphicShape->Redisplay();
-
 }
 
 TopLoc_Location FeaturePrimitive::getLocation() const
