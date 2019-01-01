@@ -23,7 +23,8 @@ int main(int argc, char *argv[])
 #include "PropertyUnits.h"
 #include "FeaturePrimitive.h"
 #include "FeatureBox.h"
-
+#include "FeaturePartBoolean.h"
+#include "FeaturePartCut.h"
 
 void InitComponents()
 {
@@ -58,4 +59,6 @@ void InitComponents()
 	Part::FeaturePrimitive::init();
 	Part::FeatureBox::init();
 	Part::FeatureCylinder::init();
+	Part::FeaturePartBoolean::init();
+	Part::FeatureCut::init();
 }

@@ -59,6 +59,8 @@ public:
 	*/
 	~Sketcher();
 
+	Handle(Sketcher_Command) GetAnalyser() { return CurCommand; };
+
 	/**
 	* \fn SetContext(Handle(AIS_InteractiveContext)& theContext)
 	* \brief set context

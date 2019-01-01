@@ -36,7 +36,6 @@ short FeaturePartBoolean::mustExecute() const
 	return 0;
 }
 
-
 bool FeaturePartBoolean::execute(void)
 {
 	try {

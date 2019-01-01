@@ -1,7 +1,9 @@
 
-#include "PropertyWidget.h"
+
 #include <QColorDialog>
 #include <QDoubleSpinBox>
+#include "PropertyWidget.h"
+#include "PropertyFeature.h"
 
 using namespace std;
 
@@ -38,14 +40,24 @@ MyPropertyWidget::~MyPropertyWidget()
 
 }
 
-void MyPropertyWidget::WritePropertiesToPropWidget(Part::FeaturePrimitive* primitive)
+void MyPropertyWidget::WritePropertiesToPropWidget(Base::BaseClass* obj)
 {
 	Clear();
-	curPrimitive = primitive;
-	// set property widget
-	if (primitive->getTypeId() == Part::FeatureBox::getClassTypeId() || primitive->getTypeId() == Part::FeatureCylinder::getClassTypeId())
+	if (obj->isDerivedFrom(Part::FeaturePrimitive::getClassTypeId()))
 	{
+		auto primitive = dynamic_cast<Part::FeaturePrimitive*>(obj);
+		curPrimitive = primitive;
 		WritePrimitiveProperties(primitive);
+	}
+	else if (obj->isDerivedFrom(App::Property::getClassTypeId()))
+	{
+		auto prop = dynamic_cast<App::Property*>(obj);
+		prop->touch();
+		if (prop->getTypeId() == Part::PropertyFeature::getClassTypeId())
+		{
+			auto fp = dynamic_cast<Part::PropertyFeature*>(prop);
+			WritePrimitiveProperties(fp->getValue());
+		}
 	}
 }
 

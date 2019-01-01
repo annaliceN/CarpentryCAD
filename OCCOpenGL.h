@@ -96,7 +96,7 @@ public slots:
 	void objSelected();
 	void onLumberLengthChanged(MyLumber*, double);
 	void Redraw(void);
-	void CreateShape(Part::FeaturePrimitive* prim);
+	void createShape(Base::BaseClass* obj);
 	void slotRedraw(void);
 	void onDeleteSelected();
 	void onProperty();
@@ -204,9 +204,9 @@ private:
 	MyPropertyWidget *propertyWidget;
 	MyObjectWidget *objectWidget;
 	QList<QAction *> *myDrawActions;
-	std::unordered_map< QTreeWidgetItem*, void* > objMapping;
-	std::map< Handle(AIS_Shape), App::Property*> primMapping;
-	std::vector< Part::PropertyFeature*> featureWorkSpace;
+	std::unordered_map< QTreeWidgetItem*, Base::BaseClass* > objMapping;
+	std::map< Handle(AIS_Shape), Part::FeaturePrimitive*> primMapping;
+	std::vector< Part::FeaturePrimitive*> featureWorkSpace;
 	V3d_Coordinate my_v3dX, my_v3dY, my_v3dZ;
 	Quantity_Parameter projVx, projVy, projVz;
 

@@ -31,7 +31,7 @@ signals:
 	void sigRedraw(void);
 
 public slots:
-	void WritePropertiesToPropWidget(Part::FeaturePrimitive* primitive);
+	void WritePropertiesToPropWidget(Base::BaseClass* obj);
 	//void WritePropertiesToPropWidget(CMesh *mesh_);
 	//void WritePropertiesToPropWidget(CorkTriMesh *corkMesh_);
 	void ShowColorSelection();

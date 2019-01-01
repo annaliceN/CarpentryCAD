@@ -17,6 +17,7 @@
 #include <BRepBuilderAPI_GTransform.hxx>
 
 #include <TopoDS.hxx>
+#include <TopExp_Explorer.hxx>
 
 #ifdef WNT
 #include <WNT_Window.hxx>
@@ -515,6 +516,7 @@ void OCCOpenGL::onLButtonUp(const int theFlags, const QPoint thePoint)
 	// Ctrl for multi selection.
 	if (thePoint.x() == myXmin && thePoint.y() == myYmin)
 	{
+		std::cout << "kaishi xuanze" << std::endl;
 		if (theFlags & Qt::ControlModifier)
 		{
 			multiInputEvent(thePoint.x(), thePoint.y());
@@ -552,7 +554,7 @@ void OCCOpenGL::onLButtonUp(const int theFlags, const QPoint thePoint)
 
 					/// Property widget
 					Handle(AIS_Shape) selectedShape = Handle(AIS_Shape)::DownCast(myContext->SelectedInteractive());
-					Part::FeaturePrimitive* selectedPrim = dynamic_cast<Part::PropertyFeature*>(primMapping[selectedShape])->getValue();
+					Part::FeaturePrimitive* selectedPrim = primMapping[selectedShape];
 
 					/// Drawing property list
 					if (selectedPrim != nullptr)
@@ -567,6 +569,12 @@ void OCCOpenGL::onLButtonUp(const int theFlags, const QPoint thePoint)
 	}
 }
 
+void projectToSketchCoord(const gp_Ax3& myCoordinateSystem, const gp_Pnt& myTempPnt, gp_Pnt2d& myCurrentPnt2d)
+{
+	myCurrentPnt2d.SetX((myTempPnt.X() - myCoordinateSystem.Location().X())*myCoordinateSystem.XDirection().X() + (myTempPnt.Y() - myCoordinateSystem.Location().Y())*myCoordinateSystem.XDirection().Y() + (myTempPnt.Z() - myCoordinateSystem.Location().Z())*myCoordinateSystem.XDirection().Z());
+	myCurrentPnt2d.SetY((myTempPnt.X() - myCoordinateSystem.Location().X())*myCoordinateSystem.YDirection().X() + (myTempPnt.Y() - myCoordinateSystem.Location().Y())*myCoordinateSystem.YDirection().Y() + (myTempPnt.Z() - myCoordinateSystem.Location().Z())*myCoordinateSystem.YDirection().Z());
+
+}
 
 void OCCOpenGL::actionStart2dSketch()
 {
@@ -633,6 +641,29 @@ void OCCOpenGL::actionStart2dSketch()
 		SketchPos = gp_Ax3(SketchBasePoint, dir, gp_Dir(1, 0, 0));
 	}
 
+	// Snapping for the edges around the selected face
+	for (TopExp_Explorer edgeExplorer(curSelectedFace, TopAbs_EDGE); edgeExplorer.More(); edgeExplorer.Next())
+	{
+		gp_Pnt2d vEdge[2];
+		Handle(Geom_CartesianPoint) cpts[2];
+		int cnt = 0;
+		for (TopExp_Explorer vertexExplorer(edgeExplorer.Current(), TopAbs_VERTEX); vertexExplorer.More(); vertexExplorer.Next())
+		{
+			const TopoDS_Vertex& vertex = TopoDS::Vertex(vertexExplorer.Current());
+			gp_Pnt pt = BRep_Tool::Pnt(vertex);
+			projectToSketchCoord(SketchPos, pt, vEdge[cnt]);
+			cpts[cnt] = new Geom_CartesianPoint(pt);
+			++cnt;
+		}
+		Handle(Geom2d_Edge) newGeom2d_Edge = new Geom2d_Edge();
+		newGeom2d_Edge->SetPoints(vEdge[0], vEdge[1]);
+		Handle(AIS_Line) myAIS_Line = new AIS_Line(cpts[0], cpts[1]);
+		myAIS_Line->SetColor(Quantity_NOC_RED);
+		mySketcher->GetAnalyser()->AddObject(newGeom2d_Edge, myAIS_Line, LineSketcherObject);
+
+	}
+	mySketcher;
+
 	/// set coordinate system
 	mySketcher->SetCoordinateSystem(SketchPos);
 	myPreviousCam = new Graphic3d_Camera;
@@ -640,7 +671,7 @@ void OCCOpenGL::actionStart2dSketch()
 	myView->Camera()->SetUp(SketchPos.YDirection());
 	myView->Camera()->SetDirection(-dir);
 	myView->Redraw();
-
+	
 }
 
 void OCCOpenGL::objSelected()
@@ -660,28 +691,9 @@ void OCCOpenGL::objSelected()
 	// set selected highLighted
 	for (int i = 0; i < iterList.size(); ++i)
 	{
-		void *objOrPrimitive = objMapping[iterList[i]];
+		auto objOrPrimitive = objMapping[iterList[i]];
 		if (objOrPrimitive == NULL) continue;
-		Part::FeaturePrimitive* prim = static_cast<Part::FeaturePrimitive*>(objOrPrimitive);
-		propertyWidget->WritePropertiesToPropWidget(prim);
-		/*
-		if (objOrPrimitive == mesh)
-		{
-			glWidget->highLightMesh = true;
-			propertyWidget->WritePropertiesToPropWidget(mesh);
-		}
-		else if (mergedPrimitives.find((CorkTriMesh*)objOrPrimitive) != mergedPrimitives.end())
-		{
-			propertyWidget->WritePropertiesToPropWidget((CorkTriMesh*)objOrPrimitive);
-		}
-		else
-		{
-			MyPrimitive *primitive = (MyPrimitive*)objOrPrimitive;
-			primitive->highLighted = true;
-			glWidget->selectedPrimitive = primitive;
-			propertyWidget->WritePropertiesToPropWidget((MyPrimitive*)objOrPrimitive);
-		}
-		*/
+		propertyWidget->WritePropertiesToPropWidget(objOrPrimitive);
 	}
 	this->update();
 }
@@ -689,10 +701,8 @@ void OCCOpenGL::objSelected()
 #include "FeaturePartCut.h"
 void OCCOpenGL::actionComplete2dSketch()
 {
-	Part::PropertyFeature* pf = new Part::PropertyFeature;
 	Part::FeatureCut* fCut = new Part::FeatureCut;
-	pf->setValue(fCut);
-	featureWorkSpace.push_back(pf);
+	featureWorkSpace.push_back(fCut);
 
 	int cnt = 0;
 	std::cout << primMapping.size() << std::endl;
@@ -700,25 +710,26 @@ void OCCOpenGL::actionComplete2dSketch()
 	{
 		std::cout << p.second;
 		if (cnt == 0)
-			fCut->BaseFeature.setValue(dynamic_cast<Part::PropertyFeature*>(p.second)->getValue());
+			fCut->BaseFeature.setValue(p.second);
 		else
-			fCut->ToolFeature.setValue(dynamic_cast<Part::PropertyFeature*>(p.second)->getValue());
+			fCut->ToolFeature.setValue(p.second);
 		cnt++;
 	}
 	
 	fCut->execute();
 
+	fCut->BuildGraphicShape();
 	auto cutGraphicShape = fCut->getGraphicShape();
-	myContext->Remove(fCut->BaseFeature.getValue()->getGraphicShape(), Standard_True);
-	myContext->Remove(fCut->ToolFeature.getValue()->getGraphicShape(), Standard_True);
-	myContext->Display(cutGraphicShape, Standard_True);
+	createShape(fCut);
 	/// stop sketching
 	actionStop2dSketch();
 }
 
 void OCCOpenGL::actionStop2dSketch()
 {
-	myCurrentMode = CurAction3d_Nothing;
+	myCurrentMode = CurAction3d_DynamicRotation;
+	mySketcher->ObjectAction(Nothing_Method);
+	mySketcher->DeleteSelectedObject();
 	activateCursor(myCurrentMode);
 	myView->SetCamera(myPreviousCam);
 	myView->Redraw();
@@ -726,6 +737,7 @@ void OCCOpenGL::actionStop2dSketch()
 
 void OCCOpenGL::actionLineCutting()
 {
+	myCurrentMode = SketcherAction;
 	actionStart2dSketch();
 	onInputLines();
 	activateCursor(SketcherAction);
@@ -759,7 +771,7 @@ void OCCOpenGL::activateCursor(const CurrentAction3d mode) {
 		setCursor(*zoomCursor);
 		break;
 	case CurAction3d_DynamicRotation:
-		setCursor(*rotCursor);
+		setCursor(*defCursor);
 		break;
 	case CurAction3d_GlobalPanning:
 		setCursor(*globPanCursor);
@@ -800,8 +812,8 @@ void OCCOpenGL::onRButtonUp(const int /*theFlags*/, const QPoint thePoint)
 	connect(openAct, &QAction::triggered, [=]() {
 		for (auto f : featureWorkSpace)
 		{
-			std::cout << "mustExecute? " << f->getValue()->mustExecute() << std::endl;
-			if (f->getValue()->mustExecute()) f->getValue()->execute();
+			std::cout << "mustExecute? " << f->mustExecute() << std::endl;
+			if (f->mustExecute()) f->execute();
 		}
 		Redraw();
 	});
@@ -812,7 +824,6 @@ void OCCOpenGL::onRButtonUp(const int /*theFlags*/, const QPoint thePoint)
 	{
 		openAct = new QAction("Sketch lines on the face", this);
 		connect(openAct, &QAction::triggered, [=]() {
-			
 			actionLineCutting();
 		});
 		menu.addAction(openAct);
@@ -978,9 +989,7 @@ void OCCOpenGL::multiInputEvent(const int x, const int y)
 
 void OCCOpenGL::moveEvent(const int x, const int y)
 {
-
 	myContext->MoveTo(x, y, myView, Standard_True);
-
 }
 
 void OCCOpenGL::multiMoveEvent(const int x, const int y)
@@ -1072,36 +1081,82 @@ void OCCOpenGL::IntersectSelected()
 	}
 }
 
-void OCCOpenGL::CreateShape(Part::FeaturePrimitive* prim)
+void OCCOpenGL::createShape(Base::BaseClass* obj)
 {
-	if (prim == nullptr) return;
-	Part::PropertyFeature* pf = new Part::PropertyFeature;
-	pf->setValue(prim);
+	if (obj == nullptr) return;
 	/// allocate mapping
-	primMapping[prim->getGraphicShape()] = pf;
-	getContext()->Display(prim->getGraphicShape(), Standard_True);
-	
 
-	QString primName;
-	QIcon primitiveIcon;
+	QTreeWidgetItem *primitiveItem;
 
-	if (prim->getTypeId() == Part::FeatureBox::getClassTypeId())
+	if (obj->isDerivedFrom(Part::FeaturePrimitive::getClassTypeId()))
 	{
-		primName = QString("Box ") + helm->AssignCreatedShape(prim);
-		primitiveIcon.addFile(":/Resources/cube_crop.png");
-	}
-	else if (prim->getTypeId() == Part::FeatureCylinder::getClassTypeId())
-	{
-		primName = QString("Cylinder ") + helm->AssignCreatedShape(prim);
-		primitiveIcon.addFile(":/Resources/cylinder_crop.png");
-	}
+		auto prim = dynamic_cast<Part::FeaturePrimitive*>(obj);
+		if (prim == nullptr) return;
 
-	QTreeWidget *treeWidget = objectWidget->ui.treeWidget;
-	QTreeWidgetItem *primitiveItem = new QTreeWidgetItem(treeWidget, QStringList(primName));
-	primitiveItem->setIcon(0, primitiveIcon);
+		primMapping[prim->getGraphicShape()] = prim;
+		myContext->Display(prim->getGraphicShape(), Standard_True);
 
-	featureWorkSpace.push_back(pf);
-	objMapping[primitiveItem] = prim;
+		QString primName;
+		QIcon primitiveIcon;
+
+		if (prim->getTypeId() == Part::FeatureBox::getClassTypeId())
+		{
+			primName = QString("Box ") + helm->AssignCreatedShape(prim);
+			primitiveIcon.addFile(":/Resources/cube_crop.png");
+			primitiveItem = new QTreeWidgetItem(QStringList(primName));
+		}
+		else if (prim->getTypeId() == Part::FeatureCylinder::getClassTypeId())
+		{
+			primName = QString("Cylinder ") + helm->AssignCreatedShape(prim);
+			primitiveIcon.addFile(":/Resources/cylinder_crop.png");
+			primitiveItem = new QTreeWidgetItem(QStringList(primName));
+		}
+		// Cut operation
+		if (prim->isDerivedFrom(Part::FeaturePartBoolean::getClassTypeId()))
+		{
+			if (prim->getTypeId() == Part::FeatureCut::getClassTypeId())
+			{
+				primName = QString("Cut ") + helm->AssignCreatedShape(prim);
+				primitiveIcon.addFile(":/Resources/cube_crop.png");
+				primitiveItem = new QTreeWidgetItem(QStringList(primName));
+				auto pCut = dynamic_cast<Part::FeatureCut*>(prim);
+				for (auto it = objMapping.begin(); it!=objMapping.end();)
+				{
+					auto p = *it;
+					if (p.second == pCut->BaseFeature.getValue() || p.second == pCut->ToolFeature.getValue())
+					{
+						auto tbCut = dynamic_cast<Part::FeaturePrimitive*>(p.second);
+						myContext->Remove(tbCut->getGraphicShape(), Standard_True);
+						delete p.first;
+						objMapping.erase(p.first);
+						it = objMapping.begin();
+					}
+					else
+					{
+						++it;
+					}
+				}
+
+				// Add property to its child
+				std::vector<App::Property*> pList;
+				prim->getPropertyList(pList);
+				for (auto prop : pList)
+				{
+					if (prop->isDerivedFrom(Part::PropertyShapeHistory::getClassTypeId())) continue;
+					QTreeWidgetItem *tbWidget = new QTreeWidgetItem(QStringList(prop->getName()));
+					primitiveItem->addChild(tbWidget);
+					objMapping[tbWidget] = prop;
+				}
+			}
+		}
+
+		QTreeWidget *treeWidget = objectWidget->ui.treeWidget;
+		treeWidget->addTopLevelItem(primitiveItem);
+		primitiveItem->setIcon(0, primitiveIcon);
+
+		featureWorkSpace.push_back(prim);
+		objMapping[primitiveItem] = prim;
+	}
 }
 
 void OCCOpenGL::slotRedraw()
