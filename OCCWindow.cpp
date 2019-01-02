@@ -282,7 +282,6 @@ void OCCWindow::outputResult(const QString& res)
 
 void OCCWindow::on_action_make_lumber()
 {
-	double valWidth, valLength, valHeight;
 	MyLumber* anPrimLumber = new MyLumber(MyLumber::StandardLumber::TWOBYFOUR, 1.0);
 
 	TopoDS_Shape aTopoBox = BRepPrimAPI_MakeBox(anPrimLumber->width, anPrimLumber->height, anPrimLumber->length).Shape();
@@ -312,19 +311,15 @@ void OCCWindow::on_action_make_cylinder()
 	Handle(AIS_Shape) cylinderShape = cylinder->BuildGraphicShape(); 
 	cylinderShape->SetColor(Quantity_NOC_GOLD);
 	myOCCOpenGL->createShape(cylinder);
-
 }
 
 void OCCWindow::on_action_make_cone()
 {
 	gp_Ax2 anAxis;
-
 	anAxis.SetLocation(gp_Pnt(0.0, 0.0, 0.0));
 	TopoDS_Shape aTopoCone = BRepPrimAPI_MakeCone(anAxis, 3.0, 0.0, 5.0).Shape();
 	Handle(AIS_Shape) anAisCone = new AIS_Shape(aTopoCone);
-
 	anAisCone->SetColor(Quantity_NOC_GOLD);
-
 	myOCCOpenGL->getContext()->Display(anAisCone, Standard_True);
 }
 

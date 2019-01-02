@@ -19,6 +19,8 @@
 #include <TopoDS.hxx>
 #include <TopExp_Explorer.hxx>
 
+#include "FeaturePartCut.h"
+
 #ifdef WNT
 #include <WNT_Window.hxx>
 #elif defined(__APPLE__) && !defined(MACOSX_USE_GLX)
@@ -275,7 +277,6 @@ void OCCOpenGL::onChangePlane() {
 	mySketcher->SetCoordinateSystem(newgp_Ax3);
 }
 
-
 void OCCOpenGL::onGrid() {
 
 	Handle(V3d_Viewer) aViewer = myView->Viewer();
@@ -296,57 +297,57 @@ void OCCOpenGL::onGrid() {
 
 void OCCOpenGL::onInputPoints() {
 	mySketcher->ObjectAction(Point_Method);
-	myCurrentMode = SketcherAction;
+	//myCurrentMode = SketcherAction;
 }
 
 void OCCOpenGL::onInputLines() {
 	mySketcher->ObjectAction(Line2P_Method);
-	myCurrentMode = SketcherAction;
+	myCurrentMode = SketcherPolyline;
 }
 
 void OCCOpenGL::onInputCircles() {
 	mySketcher->ObjectAction(CircleCenterRadius_Method);
-	myCurrentMode = SketcherAction;
+	//myCurrentMode = SketcherAction;
 }
 
 void OCCOpenGL::onInputCircles3P() {
 	mySketcher->ObjectAction(Circle3P_Method);
-	myCurrentMode = SketcherAction;
+	//myCurrentMode = SketcherAction;
 }
 
 void OCCOpenGL::onInputCircles2PTan() {
 	mySketcher->ObjectAction(Circle2PTan_Method);
-	myCurrentMode = SketcherAction;
+	//myCurrentMode = SketcherAction;
 }
 
 void OCCOpenGL::onInputCirclesP2Tan() {
 	mySketcher->ObjectAction(CircleP2Tan_Method);
-	myCurrentMode = SketcherAction;
+	//myCurrentMode = SketcherAction;
 }
 
 void OCCOpenGL::onInputCircles3Tan() {
 	mySketcher->ObjectAction(Circle3Tan_Method);
-	myCurrentMode = SketcherAction;
+	//myCurrentMode = SketcherAction;
 }
 
 void OCCOpenGL::onInputArc3P() {
 	mySketcher->ObjectAction(Arc3P_Method);
-	myCurrentMode = SketcherAction;
+	//myCurrentMode = SketcherAction;
 }
 
 void OCCOpenGL::onInputArcCenter2P() {
 	mySketcher->ObjectAction(ArcCenter2P_Method);
-	myCurrentMode = SketcherAction;
+	//myCurrentMode = SketcherAction;
 }
 
 void OCCOpenGL::onInputBezierCurve() {
 	mySketcher->ObjectAction(BezierCurve_Method);
-	myCurrentMode = SketcherAction;
+	//myCurrentMode = SketcherAction;
 }
 
 void OCCOpenGL::onTrimCurve() {
 	mySketcher->ObjectAction(Trim_Method);
-	myCurrentMode = SketcherAction;
+	//myCurrentMode = SketcherAction;
 }
 
 
@@ -466,7 +467,8 @@ void OCCOpenGL::onLButtonDown(const int theFlags, const QPoint thePoint)
 		break;
 	case CurAction3d_GlobalPanning:
 		break;
-	case SketcherAction:
+	case SketcherPolyline:
+	case SketcherCurve:
 		myView->Convert(myXmin, myYmin, my_v3dX, my_v3dY, my_v3dZ);
 		myView->Proj(projVx, projVy, projVz);
 		mySketcher->OnMouseInputEvent(my_v3dX, my_v3dY, my_v3dZ, projVx, projVy, projVz);
@@ -511,7 +513,13 @@ void OCCOpenGL::onLButtonUp(const int theFlags, const QPoint thePoint)
 		myRectBand->hide();
 	}
 
-	if (myCurrentMode == SketcherAction) return;
+	switch (myCurrentMode)
+	{
+	case SketcherCurve:
+	case SketcherPolyline:
+		return;
+		break;
+	}
 
 	// Ctrl for multi selection.
 	if (thePoint.x() == myXmin && thePoint.y() == myYmin)
@@ -579,8 +587,7 @@ void projectToSketchCoord(const gp_Ax3& myCoordinateSystem, const gp_Pnt& myTemp
 void OCCOpenGL::actionStart2dSketch()
 {
 	if (curSelectedFace.IsNull()) return;
-	myCurrentMode = SketcherAction;
-
+	
 	bool Reverse = false;
 	if (curSelectedFace.Orientation() == TopAbs_REVERSED)
 		Reverse = true;
@@ -655,14 +662,15 @@ void OCCOpenGL::actionStart2dSketch()
 			cpts[cnt] = new Geom_CartesianPoint(pt);
 			++cnt;
 		}
-		Handle(Geom2d_Edge) newGeom2d_Edge = new Geom2d_Edge();
-		newGeom2d_Edge->SetPoints(vEdge[0], vEdge[1]);
+		Handle(Geom2d_Edge) newGeomEdge = new Geom2d_Edge();
+		newGeomEdge->SetPoints(vEdge[0], vEdge[1]);
 		Handle(AIS_Line) myAIS_Line = new AIS_Line(cpts[0], cpts[1]);
 		myAIS_Line->SetColor(Quantity_NOC_RED);
-		mySketcher->GetAnalyser()->AddObject(newGeom2d_Edge, myAIS_Line, LineSketcherObject);
-
+		mySketcher->GetAnalyser()->AddObject(newGeomEdge, myAIS_Line, LineSketcherObject);
+		
+		/// flag the edge as visited
+		isSketchDataVisited.insert(newGeomEdge);
 	}
-	mySketcher;
 
 	/// set coordinate system
 	mySketcher->SetCoordinateSystem(SketchPos);
@@ -671,7 +679,88 @@ void OCCOpenGL::actionStart2dSketch()
 	myView->Camera()->SetUp(SketchPos.YDirection());
 	myView->Camera()->SetDirection(-dir);
 	myView->Redraw();
+}
+
+void OCCOpenGL::actionComplete2dSketch()
+{
+	Part::FeatureCut* fCut = new Part::FeatureCut;
+	featureWorkSpace.push_back(fCut);
+
+	int cnt = 0;
+	std::cout << primMapping.size() << std::endl;
+	for (auto p : primMapping)
+	{
+		std::cout << p.second;
+		if (cnt == 0)
+			fCut->BaseFeature.setValue(p.second);
+		else
+			fCut->ToolFeature.setValue(p.second);
+		cnt++;
+	}
 	
+	fCut->execute();
+
+	fCut->BuildGraphicShape();
+	auto cutGraphicShape = fCut->getGraphicShape();
+	createShape(fCut);
+
+	auto sData = mySketcher->GetData();
+	const auto& curCoordinateSystem = mySketcher->GetCoordinateSystem();
+	
+	for (Standard_Integer i = 1; i <= sData->Length(); i++)
+	{
+		auto myCurObject = Handle(Sketcher_Object)::DownCast(sData->Value(i));
+		auto drawnEdge = Handle(Geom2d_Edge)::DownCast(myCurObject->GetGeometry());
+		if (isSketchDataVisited.find(drawnEdge) != isSketchDataVisited.end())
+		{
+			std::cout << "already existed" << std::endl;
+			continue;
+		}
+		else
+		{
+			std::cout << "not existed" << std::endl;
+		}
+
+		auto ps = drawnEdge->GetStart_Pnt();
+		auto pe = drawnEdge->GetEnd_Pnt();
+		Handle(Geom_CartesianPoint) Geom_Point1 = new Geom_CartesianPoint(ElCLib::To3d(curCoordinateSystem.Ax2(), ps));
+		Handle(Geom_CartesianPoint) Geom_Point2 = new Geom_CartesianPoint(ElCLib::To3d(curCoordinateSystem.Ax2(), pe));
+	}
+
+	/// stop sketching
+	actionStop2dSketch();
+}
+
+void OCCOpenGL::actionStop2dSketch()
+{
+	myCurrentMode = CurAction3d_DynamicRotation;
+	auto& sData= mySketcher->GetData();
+	for (auto i = 1; i <= sData->Length(); ++i)
+	{
+		auto myCurObject = Handle(Sketcher_Object)::DownCast(sData->Value(i));
+		auto myCurAISObj = myCurObject->GetAIS_Object();
+		myContext->Remove(myCurAISObj, Standard_True);
+		myCurAISObj->Delete();
+	}
+	mySketcher->ObjectAction(Nothing_Method);
+	activateCursor(myCurrentMode);
+	myView->SetCamera(myPreviousCam);
+	myView->Redraw();
+}
+
+void OCCOpenGL::actionPolylineCutting()
+{
+	myCurrentMode = SketcherPolyline;
+	actionStart2dSketch();
+	onInputLines();
+	activateCursor(SketcherPolyline);
+}
+
+void OCCOpenGL::actionCurveCutting()
+{
+	actionStart2dSketch();
+	onInputBezierCurve();
+	activateCursor(SketcherCurve);
 }
 
 void OCCOpenGL::objSelected()
@@ -696,58 +785,6 @@ void OCCOpenGL::objSelected()
 		propertyWidget->WritePropertiesToPropWidget(objOrPrimitive);
 	}
 	this->update();
-}
-
-#include "FeaturePartCut.h"
-void OCCOpenGL::actionComplete2dSketch()
-{
-	Part::FeatureCut* fCut = new Part::FeatureCut;
-	featureWorkSpace.push_back(fCut);
-
-	int cnt = 0;
-	std::cout << primMapping.size() << std::endl;
-	for (auto p : primMapping)
-	{
-		std::cout << p.second;
-		if (cnt == 0)
-			fCut->BaseFeature.setValue(p.second);
-		else
-			fCut->ToolFeature.setValue(p.second);
-		cnt++;
-	}
-	
-	fCut->execute();
-
-	fCut->BuildGraphicShape();
-	auto cutGraphicShape = fCut->getGraphicShape();
-	createShape(fCut);
-	/// stop sketching
-	actionStop2dSketch();
-}
-
-void OCCOpenGL::actionStop2dSketch()
-{
-	myCurrentMode = CurAction3d_DynamicRotation;
-	mySketcher->ObjectAction(Nothing_Method);
-	mySketcher->DeleteSelectedObject();
-	activateCursor(myCurrentMode);
-	myView->SetCamera(myPreviousCam);
-	myView->Redraw();
-}
-
-void OCCOpenGL::actionLineCutting()
-{
-	myCurrentMode = SketcherAction;
-	actionStart2dSketch();
-	onInputLines();
-	activateCursor(SketcherAction);
-}
-
-void OCCOpenGL::actionCurveCutting()
-{
-	actionStart2dSketch();
-	onInputBezierCurve();
-	activateCursor(SketcherAction);
 }
 
 void OCCOpenGL::initCursors() {
@@ -779,7 +816,8 @@ void OCCOpenGL::activateCursor(const CurrentAction3d mode) {
 	case CurAction3d_WindowZooming:
 		setCursor(*handCursor);
 		break;
-	case SketcherAction:
+	case SketcherPolyline:
+	case SketcherCurve:
 		setCursor(*globPanCursor);
 		break;
 	case CurAction3d_Nothing:
@@ -824,7 +862,7 @@ void OCCOpenGL::onRButtonUp(const int /*theFlags*/, const QPoint thePoint)
 	{
 		openAct = new QAction("Sketch lines on the face", this);
 		connect(openAct, &QAction::triggered, [=]() {
-			actionLineCutting();
+			actionPolylineCutting();
 		});
 		menu.addAction(openAct);
 
@@ -835,7 +873,7 @@ void OCCOpenGL::onRButtonUp(const int /*theFlags*/, const QPoint thePoint)
 		});
 		menu.addAction(openAct);
 
-		if (myCurrentMode == SketcherAction)
+		if (myCurrentMode == SketcherPolyline )
 		{
 			openAct = new QAction("Complete sketching", this);
 			connect(openAct, &QAction::triggered, [=]() {
@@ -915,7 +953,7 @@ void OCCOpenGL::onMouseMove(const int theFlags, const QPoint thePoint)
 		myYmax = thePoint.y();
 	}
 
-	if (myCurrentMode == SketcherAction)
+	if (myCurrentMode == SketcherPolyline || myCurrentMode == SketcherCurve)
 	{
 		myView->Convert(thePoint.x(), thePoint.y(), my_v3dX, my_v3dY, my_v3dZ);
 		myView->Proj(projVx, projVy, projVz);
@@ -1056,7 +1094,6 @@ void OCCOpenGL::FuseSelected()
 		myContext->Remove(vecShapes[1], Standard_True);
 		myContext->Display(anAisCylinder, Standard_True);
 	}
-
 }
 
 void OCCOpenGL::IntersectSelected()
@@ -1072,7 +1109,6 @@ void OCCOpenGL::IntersectSelected()
 
 		TopoDS_Shape aFusedShape = BRepAlgoAPI_Cut(shapeA->Shape(), shapeB->Shape());
 		Handle(AIS_Shape) intersectedSahpe = new AIS_Shape(aFusedShape);
-		std::cout << "cut done" << std::endl;
 		myContext->Remove(vecShapes[0], Standard_True);
 		myContext->Remove(vecShapes[1], Standard_True);
 		myContext->Display(intersectedSahpe, Standard_True);
@@ -1163,32 +1199,6 @@ void OCCOpenGL::slotRedraw()
 {
 	Redraw();
 	helm->CompileToHELM();
-}
-
-void OCCOpenGL::onLumberLengthChanged(MyLumber* lumber, double length)
-{
-	AIS_ListOfInteractive listOfInteractive;
-	myContext->DisplayedObjects(listOfInteractive);
-	AIS_ListIteratorOfListOfInteractive iter(listOfInteractive);
-	for (; iter.More(); iter.Next())
-	{
-		Handle(AIS_InteractiveObject) firstInterObj = iter.Value();
-		if (lumber->getGraphicShape() == Handle(AIS_Shape)::DownCast(firstInterObj))
-		{
-			gp_GTrsf scaleTrsf = gp_GTrsf();
-			gp_Mat rot(1.0, 0, 0, 0, 1.0, 0, 0, 0, length);
-			scaleTrsf.SetVectorialPart(rot);
-			//scaleTrsf.SetValue(3, 3, scaleRatio);
-
-			BRepBuilderAPI_GTransform trsf(lumber->baseShape, scaleTrsf);
-			auto updatedShape = trsf.Shape();
-
-			lumber->getGraphicShape()->Set(updatedShape);
-			lumber->getGraphicShape()->Redisplay(Standard_True);
-			myView->Redraw();
-		}
-	}
-
 }
 
 void OCCOpenGL::Redraw()

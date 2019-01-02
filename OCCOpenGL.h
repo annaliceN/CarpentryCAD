@@ -40,7 +40,8 @@ public:
         CurAction3d_DynamicPanning,
         CurAction3d_GlobalPanning,
         CurAction3d_DynamicRotation,
-		SketcherAction
+		SketcherPolyline,
+		SketcherCurve
     };
 
 	enum InterMode
@@ -94,7 +95,6 @@ public slots:
     void zoom(void);
 	void rotate(void);
 	void objSelected();
-	void onLumberLengthChanged(MyLumber*, double);
 	void Redraw(void);
 	void createShape(Base::BaseClass* obj);
 	void slotRedraw(void);
@@ -135,7 +135,7 @@ protected:
 	void actionStart2dSketch();
 	void actionComplete2dSketch();
 	void actionStop2dSketch();
-	void actionLineCutting();
+	void actionPolylineCutting();
 	void actionCurveCutting();
 	void initCursors();
 	void activateCursor(const CurrentAction3d mode);
@@ -209,6 +209,7 @@ private:
 	std::vector< Part::FeaturePrimitive*> featureWorkSpace;
 	V3d_Coordinate my_v3dX, my_v3dY, my_v3dZ;
 	Quantity_Parameter projVx, projVy, projVz;
+	std::set< Handle(Geom2d_Edge) > isSketchDataVisited;
 
 	QCursor* defCursor = NULL;
 	QCursor* handCursor = NULL;
