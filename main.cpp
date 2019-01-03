@@ -49,6 +49,7 @@ void InitComponents()
 	App::PropertyInteger::init();
 	App::PropertyIntegerConstraint::init();
 	App::PropertyIntegerList::init();
+	App::PropertyVectorList::init();
 	App::PropertyFloat::init();
 	App::PropertyFloatConstraint::init();
 	App::PropertyFloatList::init();

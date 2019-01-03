@@ -136,7 +136,9 @@ protected:
 	void actionStart2dSketch(void);
 	gp_Dir getDirection(const TopoDS_Face & face);
 	void actionApplyPolyCut(void);
+	void actionApplyCurveCut();
 	void actionApplyDrill(void);
+	void actionApply();
 	void actionStop2dSketch(void);
 	void actionPolylineCutting(void);
 	void actionCurveCutting(void);
@@ -187,6 +189,7 @@ private:
     //! the mouse current mode.
     CurrentAction3d myCurrentMode;
 	TopoDS_Face curSelectedFace;
+	Handle(AIS_Shape) curSelectedGraphicShape;
 
     //! save the degenerate mode state.
     Standard_Boolean myDegenerateModeIsOn;

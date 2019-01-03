@@ -258,6 +258,8 @@ public:
 	*/
 	Sketcher_SnapType GetSnap();
 
+	Handle(Sketcher_Command) GetCurrentCommand() { return CurCommand; }
+
 private:
 	/**
 	* \fn ProjectPointOnPlane(const V3d_Coordinate &v3dX,const V3d_Coordinate &v3dY,const V3d_Coordinate &v3dZ,const Quantity_Parameter& projVx,const Quantity_Parameter& projVy,const Quantity_Parameter& projVz)

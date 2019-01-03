@@ -14,6 +14,7 @@
 #include <BRepAlgoAPI_Cut.hxx>
 #include <BRepBuilderAPI_Transform.hxx>
 #include <BRepBuilderAPI_GTransform.hxx>
+#include <BRepBuilderAPI_MakeWire.hxx>
 
 #include <TopoDS.hxx>
 #include <TopExp_Explorer.hxx>
@@ -21,12 +22,15 @@
 #include <Geom_BSplineSurface.hxx>
 #include <Geom_BezierSurface.hxx>
 #include <TColgp_Array2OfPnt.hxx>
+#include <ShapeAnalysis_Curve.hxx>
 
 #include "FeaturePartCut.h"
 #include "FeaturePolyline.h"
 #include "FeaturePolyCut.h"
 #include "FeatureBezierCurve.h"
 #include "FeatureDrill.h"
+#include <BRepAdaptor_Surface.hxx>
+#include <GeomAPI_ProjectPointOnSurf.hxx>
 
 #ifdef WNT
 #include <WNT_Window.hxx>
@@ -263,7 +267,6 @@ void OCCOpenGL::initDrawActions() {
 	myDrawActions->insert(MyTrimCurveAction, a);
 }
 
-
 void OCCOpenGL::onDeleteSelected() {
 	mySketcher->DeleteSelectedObject();
 }
@@ -354,7 +357,6 @@ void OCCOpenGL::onTrimCurve() {
 	mySketcher->ObjectAction(Trim_Method);
 	//myCurrentMode = SketcherAction;
 }
-
 
 void OCCOpenGL::ApplyConnections()
 {
@@ -509,8 +511,7 @@ void OCCOpenGL::onRButtonDown(const int /*theFlags*/, const QPoint thePoint)
 		myView->StartRotation(thePoint.x(), thePoint.y());
 	}
 }
-#include <BRepAdaptor_Surface.hxx>
-#include <GeomAPI_ProjectPointOnSurf.hxx>
+
 void OCCOpenGL::onLButtonUp(const int theFlags, const QPoint thePoint)
 {
 	// Hide the QRubberBand
@@ -568,8 +569,8 @@ void OCCOpenGL::onLButtonUp(const int theFlags, const QPoint thePoint)
 					}
 
 					/// Property widget
-					Handle(AIS_Shape) selectedShape = Handle(AIS_Shape)::DownCast(myContext->SelectedInteractive());
-					Part::FeaturePrimitive* selectedPrim = primMapping[selectedShape];
+					curSelectedGraphicShape = Handle(AIS_Shape)::DownCast(myContext->SelectedInteractive());
+					Part::FeaturePrimitive* selectedPrim = primMapping[curSelectedGraphicShape];
 
 					/// Drawing property list
 					if (selectedPrim != nullptr)
@@ -712,16 +713,7 @@ gp_Dir OCCOpenGL::getDirection(const TopoDS_Face & face)
 void OCCOpenGL::actionApplyPolyCut()
 {
 	Part::FeaturePolyCut* fCut = new Part::FeaturePolyCut;
-
-	int cnt = 0;
-	for (auto p : primMapping)
-	{
-		if (cnt == 0)
- 			fCut->BaseFeature.setValue(p.second);
-// 		else
-// 			fCut->ToolFeature.setValue(p.second);
-		cnt++;
-	}
+	fCut->BaseFeature.setValue(primMapping[curSelectedGraphicShape]);
 	
 	auto sData = mySketcher->GetData();
 	const auto& curCoordinateSystem = mySketcher->GetCoordinateSystem();
@@ -760,6 +752,7 @@ void OCCOpenGL::actionApplyPolyCut()
 	fPCut->Nodes.setValues(vecLines);
 	fPCut->execute();
 	fCut->ToolFeature.setValue(fPCut);
+	createShape(fPCut);
 
 	// create shape
 	fCut->execute();
@@ -771,19 +764,58 @@ void OCCOpenGL::actionApplyPolyCut()
 	actionStop2dSketch();
 }
 
+void OCCOpenGL::actionApplyCurveCut()
+{
+	Part::FeaturePolyCut* fCut = new Part::FeaturePolyCut;
+	fCut->BaseFeature.setValue(primMapping[curSelectedGraphicShape]);
+	
+	Part::FeaturePolyline* fPCut = new Part::FeaturePolyline;
+	Handle(Geom_Surface) aSurface = BRep_Tool::Surface(curSelectedFace);
+	Standard_Real umin, umax, vmin, vmax;
+	GeomLProp_SLProps props(aSurface, umin, vmin, 1, 0.01);
+	gp_Dir normal = props.Normal();
+	fPCut->Dir.setValue(Base::Vector3d(normal.X(), normal.Y(), normal.Z()));
+
+	auto sData = mySketcher->GetData();
+	const auto& curCoordinateSystem = mySketcher->GetCoordinateSystem();
+
+	std::vector< Base::Vector3d> vecLines;
+	auto curCommand = mySketcher->GetCurrentCommand();
+	auto bezierCommand = Handle(Sketcher_CommandBezierCurve)::DownCast(curCommand);
+	if (!bezierCommand.IsNull())
+	{
+		auto bCurve = bezierCommand->GetBezier();
+		TColgp_SequenceOfPnt pnts;
+		ShapeAnalysis_Curve::GetSamplePoints(bCurve, 0.0, 1.0, pnts);
+		if (pnts.Length() == 0)
+			printf_s(" !!!!!!!!!!!!! zero points in curve !!!!!!!!!!!!!!!!!\n");
+
+		for (int i = 0; i < pnts.Length(); i++)
+		{
+			gp_Pnt pnt = pnts.Value(i + 1);
+			vecLines.emplace_back(pnt.X(), pnt.Y(), pnt.Z());
+		}
+	}
+
+	fPCut->Nodes.setValues(vecLines);
+	fPCut->execute();
+	fCut->ToolFeature.setValue(fPCut);
+
+	// create shape
+	fCut->execute();
+	fCut->BuildGraphicShape();
+	auto cutGraphicShape = fCut->getGraphicShape();
+	createShape(fCut);
+
+	// stop sketching
+	actionStop2dSketch();
+	return;
+}
+
 void OCCOpenGL::actionApplyDrill(void)
 {
 	Part::FeatureDrill* fDrill = new Part::FeatureDrill;
-
-	int cnt = 0;
-	for (auto p : primMapping)
-	{
-		if (cnt == 0)
-			fDrill->BaseFeature.setValue(p.second);
-		// 		else
-		// 			fCut->ToolFeature.setValue(p.second);
-		cnt++;
-	}
+	fDrill->BaseFeature.setValue(primMapping[curSelectedGraphicShape]);
 
 	auto sData = mySketcher->GetData();
 	const auto& curCoordinateSystem = mySketcher->GetCoordinateSystem();
@@ -817,6 +849,22 @@ void OCCOpenGL::actionApplyDrill(void)
 	actionStop2dSketch();
 }
 
+void OCCOpenGL::actionApply()
+{
+	switch (myCurrentMode)
+	{
+	case SketcherCurve:
+		actionApplyCurveCut();
+		break;
+	case SketcherPolyline:
+		actionApplyPolyCut();
+		break;
+	case SketcherDrill:
+		actionApplyDrill();
+		break;
+	}
+}
+
 void OCCOpenGL::actionStop2dSketch()
 {
 	myCurrentMode = CurAction3d_DynamicRotation;
@@ -826,8 +874,9 @@ void OCCOpenGL::actionStop2dSketch()
 		auto myCurObject = Handle(Sketcher_Object)::DownCast(sData->Value(i));
 		auto myCurAISObj = myCurObject->GetAIS_Object();
 		myContext->Remove(myCurAISObj, Standard_True);
-		myCurAISObj->Delete();
+		//myCurAISObj->Delete();
 	}
+	sData->Clear();
 	mySketcher->ObjectAction(Nothing_Method);
 	activateCursor(myCurrentMode);
 	myView->SetCamera(myPreviousCam);
@@ -980,29 +1029,17 @@ void OCCOpenGL::onRButtonUp(const int /*theFlags*/, const QPoint thePoint)
 			actionDrillHoles();
 		});
 		menu.addAction(openAct);
-
-		switch (myCurrentMode)
-		{
-		case SketcherPolyline:
-		case SketcherCurve:
-			openAct = new QAction("Apply", this);
-			connect(openAct, &QAction::triggered, [=]() {
-				actionApplyPolyCut();
-			});
-			menu.addAction(openAct);
-			break;
-		case SketcherDrill:
-			openAct = new QAction("Apply", this);
-			connect(openAct, &QAction::triggered, [=]() {
-				actionApplyDrill();
-			});
-			break;
-		}
-
+		
 		if (myCurrentMode == SketcherCurve ||
 			myCurrentMode == SketcherPolyline ||
 			myCurrentMode == SketcherDrill)
 		{
+			openAct = new QAction("Apply", this);
+			connect(openAct, &QAction::triggered, [=]() {
+				actionApply();
+			});
+			menu.addAction(openAct);
+
 			menu.addAction(openAct);
 			openAct = new QAction("Cancel", this);
 			connect(openAct, &QAction::triggered, [=]() {
@@ -1101,7 +1138,6 @@ void OCCOpenGL::onMouseMove(const int theFlags, const QPoint thePoint)
 		break;
 	}
 }
-
 
 void OCCOpenGL::onMouseWheel(const int /*theFlags*/, const int theDelta, const QPoint thePoint)
 {
@@ -1214,7 +1250,6 @@ void OCCOpenGL::panByMiddleButton(const QPoint& thePoint)
 	myView->Pan(aCenterX - thePoint.x(), thePoint.y() - aCenterY);
 }
 
-
 void OCCOpenGL::FuseSelected()
 {
 	if (vecShapes.size() != 2) return;
@@ -1268,8 +1303,11 @@ void OCCOpenGL::createShape(Base::BaseClass* obj)
 		auto prim = dynamic_cast<Part::FeaturePrimitive*>(obj);
 		if (prim == nullptr) return;
 
-		primMapping[prim->getGraphicShape()] = prim;
-		myContext->Display(prim->getGraphicShape(), Standard_True);
+		if (prim->getTypeId() != Part::FeaturePolyline::getClassTypeId())
+		{
+			primMapping[prim->getGraphicShape()] = prim;
+			myContext->Display(prim->getGraphicShape(), Standard_True);
+		}
 
 		QString primName;
 		QIcon primitiveIcon;
@@ -1299,15 +1337,15 @@ void OCCOpenGL::createShape(Base::BaseClass* obj)
 			for (auto it = objMapping.begin(); it != objMapping.end();)
 			{
 				auto p = *it;
-				if (p.second == pDrill->BaseFeature.getValue())
-				{
-					auto tbCut = dynamic_cast<Part::FeaturePrimitive*>(p.second);
-					myContext->Remove(tbCut->getGraphicShape(), Standard_True);
-					delete p.first;
-					objMapping.erase(p.first);
-					it = objMapping.begin();
-				}
-				else
+ 				if (p.second == pDrill->BaseFeature.getValue())
+ 				{
+ 					auto tbCut = dynamic_cast<Part::FeaturePrimitive*>(p.second);
+ 					myContext->Remove(tbCut->getGraphicShape(), Standard_True);
+// 					delete p.first;
+// 					objMapping.erase(p.first);
+// 					it = objMapping.begin();
+ 				}
+// 				else
 				{
 					++it;
 				}
@@ -1336,19 +1374,35 @@ void OCCOpenGL::createShape(Base::BaseClass* obj)
 				auto p = *it;
 				if (p.second == pCut->BaseFeature.getValue() || p.second == pCut->ToolFeature.getValue())
 				{
-					auto tbCut = dynamic_cast<Part::FeaturePrimitive*>(p.second);
-					myContext->Remove(tbCut->getGraphicShape(), Standard_True);
-					delete p.first;
-					objMapping.erase(p.first);
-					it = objMapping.begin();
-				}
-				else
+ 					auto tbCut = dynamic_cast<Part::FeaturePrimitive*>(p.second);
+ 					myContext->Remove(tbCut->getGraphicShape(), Standard_True);
+// 					delete p.first;
+// 					objMapping.erase(p.first);
+// 					it = objMapping.begin();
+ 				}
+// 				else
 				{
 					++it;
 				}
 			}
 
 			// Add property to its child
+			std::vector<App::Property*> pList;
+			prim->getPropertyList(pList);
+			for (auto prop : pList)
+			{
+				if (prop->isDerivedFrom(Part::PropertyShapeHistory::getClassTypeId())) continue;
+				QTreeWidgetItem *tbWidget = new QTreeWidgetItem(QStringList(prop->getName()));
+				primitiveItem->addChild(tbWidget);
+				objMapping[tbWidget] = prop;
+			}
+		}
+		else if (prim->getTypeId() == Part::FeaturePolyline::getClassTypeId())
+		{
+			primName = QString("Wire ") + helm->AssignCreatedShape(prim);
+			primitiveIcon.addFile(":/Resources/cube_crop.png");
+			primitiveItem = new QTreeWidgetItem(QStringList(primName));
+
 			std::vector<App::Property*> pList;
 			prim->getPropertyList(pList);
 			for (auto prop : pList)
@@ -1367,6 +1421,9 @@ void OCCOpenGL::createShape(Base::BaseClass* obj)
 		featureWorkSpace.push_back(prim);
 		objMapping[primitiveItem] = prim;
 	}
+
+	// Refresh and generate helm code
+	slotRedraw();
 }
 
 void OCCOpenGL::slotRedraw()

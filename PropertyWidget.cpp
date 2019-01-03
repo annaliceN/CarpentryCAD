@@ -165,14 +165,6 @@ void MyPropertyWidget::WritePrimitiveProperties(Part::FeaturePrimitive* box)
 			++nRow;
 		}
 	}
-
-	tableWidgetItem = new QTableWidgetItem("test column");
-	InsertItem(tableWidgetItem, nRow, 0);
-
-	QComboBox* comboBox = new QComboBox;
-	tableWidget->setCellWidget(nRow, 1, comboBox);
-	QDoubleSpinBox* spinBox = new QDoubleSpinBox;
-
 }
 
 void MyPropertyWidget::WriteAppProperty(App::Property* prop)
@@ -180,7 +172,58 @@ void MyPropertyWidget::WriteAppProperty(App::Property* prop)
 	QTableWidget *tableWidget = ui.tableWidget;
 	tableWidget->setRowCount(1);
 
-	if (prop->getTypeId() == App::PropertyBool::getClassTypeId())
+	if (prop->getTypeId() == App::PropertyVectorList::getClassTypeId())
+	{
+		auto pVecList = dynamic_cast<App::PropertyVectorList*>(prop);
+
+		// Now we only use it to adjust line
+		if (pVecList->getValues().size() > 2) return;
+
+		QTableWidgetItem *tableWidgetItem = new QTableWidgetItem("Parameters");
+		InsertMergeRow(tableWidgetItem, 0);
+		tableWidget->setRowCount(8);
+		int nRow = 1;
+		const std::string coords[3] = { "X", "Y", "Z" };
+
+		for (int i = 0; i < 3; ++i)
+		{
+			tableWidgetItem = new QTableWidgetItem(coords[i].c_str());
+			InsertItem(tableWidgetItem, nRow, 0);
+			QDoubleSpinBox* spinBox = new QDoubleSpinBox;
+			spinBox->setValue(pVecList->getValues()[0][i]);
+			tableWidget->setCellWidget(nRow, 1, spinBox);
+
+			connect(spinBox, static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged),
+				[=](double val) {
+				auto _plc = pVecList->getValues();
+				_plc[0][i] = val;
+				pVecList->setValues(_plc);
+				emit sigRedraw();
+			});
+
+			++nRow;
+		}
+
+		for (int i = 0; i < 3; ++i)
+		{
+			tableWidgetItem = new QTableWidgetItem(coords[i].c_str());
+			InsertItem(tableWidgetItem, nRow, 0);
+			QDoubleSpinBox* spinBox = new QDoubleSpinBox;
+			spinBox->setValue(pVecList->getValues()[1][i]);
+			tableWidget->setCellWidget(nRow, 1, spinBox);
+
+			connect(spinBox, static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged),
+				[=](double val) {
+				auto _plc = pVecList->getValues();
+				_plc[1][i] = val;
+				pVecList->setValues(_plc);
+				emit sigRedraw();
+			});
+
+			++nRow;
+		}
+	}
+	else if (prop->getTypeId() == App::PropertyBool::getClassTypeId())
 	{
 		auto pb = dynamic_cast<App::PropertyBool*> (prop);
 		auto tableWidgetItem = new QTableWidgetItem(pb->getName());

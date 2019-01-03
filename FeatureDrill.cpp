@@ -21,6 +21,7 @@ FeatureDrill::FeatureDrill()
 	ADD_PROPERTY(Dir, (Base::Vector3d()));
 	ADD_PROPERTY(Radius, (2));
 	ADD_PROPERTY(Depth, (10));
+	ADD_PROPERTY(BaseFeature, (0));
 	ADD_PROPERTY_TYPE(History, (ShapeHistory()), "Boolean", (App::PropertyType)
 		(App::Prop_Output | App::Prop_Transient | App::Prop_Hidden), "Shape history");
 	History.setSize(0);
