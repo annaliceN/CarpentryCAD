@@ -576,6 +576,52 @@ private:
 	bool _lValue;
 };
 
+/** Vector properties
+* This is the father of all properties handling Integers.
+*/
+class PropertyVector : public Property
+{
+	TYPESYSTEM_HEADER();
+
+public:
+	/**
+	* A constructor.
+	* A more elaborate description of the constructor.
+	*/
+	PropertyVector();
+
+	/**
+	* A destructor.
+	* A more elaborate description of the destructor.
+	*/
+	virtual ~PropertyVector();
+
+	/** Sets the property
+	*/
+	void setValue(const Base::Vector3d &vec);
+	void setValue(double x, double y, double z);
+	
+	/** This method returns a string representation of the property
+	*/
+	const Base::Vector3d &getValue(void) const;
+	const char* getEditorName(void) const {
+		return "Gui::PropertyEditor::PropertyVectorItem";
+	}
+	
+	virtual void Save(Base::Writer &writer) const;
+	virtual void Restore(Base::XMLReader &reader);
+
+	virtual Property *Copy(void) const;
+	virtual void Paste(const Property &from);
+
+	virtual unsigned int getMemSize(void) const {
+		return sizeof(Base::Vector3d);
+	}
+
+private:
+	Base::Vector3d _cVec;
+};
+
 class PropertyVectorList : public PropertyLists
 {
 	TYPESYSTEM_HEADER();

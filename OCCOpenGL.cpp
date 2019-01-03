@@ -5,7 +5,6 @@
 #include <QRubberBand>
 #include <QStyleFactory>
 
-
 #include <OpenGl_GraphicDriver.hxx>
 #include <V3d_View.hxx>
 #include <Aspect_Handle.hxx>
@@ -18,8 +17,16 @@
 
 #include <TopoDS.hxx>
 #include <TopExp_Explorer.hxx>
+#include <GeomLProp_SLProps.hxx>
+#include <Geom_BSplineSurface.hxx>
+#include <Geom_BezierSurface.hxx>
+#include <TColgp_Array2OfPnt.hxx>
 
 #include "FeaturePartCut.h"
+#include "FeaturePolyline.h"
+#include "FeaturePolyCut.h"
+#include "FeatureBezierCurve.h"
+#include "FeatureDrill.h"
 
 #ifdef WNT
 #include <WNT_Window.hxx>
@@ -297,12 +304,10 @@ void OCCOpenGL::onGrid() {
 
 void OCCOpenGL::onInputPoints() {
 	mySketcher->ObjectAction(Point_Method);
-	//myCurrentMode = SketcherAction;
 }
 
 void OCCOpenGL::onInputLines() {
 	mySketcher->ObjectAction(Line2P_Method);
-	myCurrentMode = SketcherPolyline;
 }
 
 void OCCOpenGL::onInputCircles() {
@@ -469,6 +474,7 @@ void OCCOpenGL::onLButtonDown(const int theFlags, const QPoint thePoint)
 		break;
 	case SketcherPolyline:
 	case SketcherCurve:
+	case SketcherDrill:
 		myView->Convert(myXmin, myYmin, my_v3dX, my_v3dY, my_v3dZ);
 		myView->Proj(projVx, projVy, projVz);
 		mySketcher->OnMouseInputEvent(my_v3dX, my_v3dY, my_v3dZ, projVx, projVy, projVz);
@@ -517,6 +523,7 @@ void OCCOpenGL::onLButtonUp(const int theFlags, const QPoint thePoint)
 	{
 	case SketcherCurve:
 	case SketcherPolyline:
+	case SketcherDrill:
 		return;
 		break;
 	}
@@ -681,53 +688,132 @@ void OCCOpenGL::actionStart2dSketch()
 	myView->Redraw();
 }
 
-void OCCOpenGL::actionComplete2dSketch()
+gp_Dir OCCOpenGL::getDirection(const TopoDS_Face & face)
 {
-	Part::FeatureCut* fCut = new Part::FeatureCut;
-	featureWorkSpace.push_back(fCut);
+	Handle(Geom_Surface) SurfToProj = BRep_Tool::Surface(face);
+	Standard_Real umin, umax, vmin, vmax;
+	GeomLProp_SLProps props(SurfToProj, umin, vmin, 1, 0.01);
+	gp_Dir Normal = props.Normal();
+	Standard_Real Min_Curvature = props.MinCurvature();
+	Standard_Real Max_Curvature = props.MaxCurvature();
+
+	// In the case your manifold changes from convex to concave or viceversa
+	// the normal could jump from "inner" to "outer" normal.
+	// However, you should be able to change the normal sense preserving
+	// the manifold orientation:
+	if (face.Orientation() == TopAbs_REVERSED)
+	{
+		Normal = gp_Dir(-Normal.X(), -Normal.Y(), -Normal.Z());
+	}
+
+	return Normal;
+}
+
+void OCCOpenGL::actionApplyPolyCut()
+{
+	Part::FeaturePolyCut* fCut = new Part::FeaturePolyCut;
 
 	int cnt = 0;
-	std::cout << primMapping.size() << std::endl;
 	for (auto p : primMapping)
 	{
-		std::cout << p.second;
 		if (cnt == 0)
-			fCut->BaseFeature.setValue(p.second);
-		else
-			fCut->ToolFeature.setValue(p.second);
+ 			fCut->BaseFeature.setValue(p.second);
+// 		else
+// 			fCut->ToolFeature.setValue(p.second);
 		cnt++;
 	}
 	
-	fCut->execute();
-
-	fCut->BuildGraphicShape();
-	auto cutGraphicShape = fCut->getGraphicShape();
-	createShape(fCut);
-
 	auto sData = mySketcher->GetData();
 	const auto& curCoordinateSystem = mySketcher->GetCoordinateSystem();
 	
+	Part::FeaturePolyline* fPCut = new Part::FeaturePolyline;
+
+	Handle(Geom_Surface) aSurface = BRep_Tool::Surface(curSelectedFace);
+	Standard_Real umin, umax, vmin, vmax;
+	GeomLProp_SLProps props(aSurface, umin, vmin, 1, 0.01);
+	gp_Dir normal = props.Normal();
+	fPCut->Dir.setValue(Base::Vector3d(normal.X(), normal.Y(), normal.Z()));
+	
+	std::vector< Base::Vector3d> vecLines;
+	bool isStartPoint = true;
 	for (Standard_Integer i = 1; i <= sData->Length(); i++)
 	{
 		auto myCurObject = Handle(Sketcher_Object)::DownCast(sData->Value(i));
 		auto drawnEdge = Handle(Geom2d_Edge)::DownCast(myCurObject->GetGeometry());
 		if (isSketchDataVisited.find(drawnEdge) != isSketchDataVisited.end())
 		{
-			std::cout << "already existed" << std::endl;
 			continue;
 		}
-		else
-		{
-			std::cout << "not existed" << std::endl;
-		}
-
 		auto ps = drawnEdge->GetStart_Pnt();
 		auto pe = drawnEdge->GetEnd_Pnt();
 		Handle(Geom_CartesianPoint) Geom_Point1 = new Geom_CartesianPoint(ElCLib::To3d(curCoordinateSystem.Ax2(), ps));
 		Handle(Geom_CartesianPoint) Geom_Point2 = new Geom_CartesianPoint(ElCLib::To3d(curCoordinateSystem.Ax2(), pe));
+		
+		if (isStartPoint)
+		{
+			vecLines.push_back(Base::Vector3d(Geom_Point1->X(), Geom_Point1->Y(), Geom_Point1->Z()));
+			isStartPoint = false;
+		}
+		vecLines.push_back(Base::Vector3d(Geom_Point2->X(), Geom_Point2->Y(), Geom_Point2->Z()));
 	}
 
-	/// stop sketching
+	fPCut->Nodes.setValues(vecLines);
+	fPCut->execute();
+	fCut->ToolFeature.setValue(fPCut);
+
+	// create shape
+	fCut->execute();
+	fCut->BuildGraphicShape();
+	auto cutGraphicShape = fCut->getGraphicShape();
+	createShape(fCut);
+	
+	// stop sketching
+	actionStop2dSketch();
+}
+
+void OCCOpenGL::actionApplyDrill(void)
+{
+	Part::FeatureDrill* fDrill = new Part::FeatureDrill;
+
+	int cnt = 0;
+	for (auto p : primMapping)
+	{
+		if (cnt == 0)
+			fDrill->BaseFeature.setValue(p.second);
+		// 		else
+		// 			fCut->ToolFeature.setValue(p.second);
+		cnt++;
+	}
+
+	auto sData = mySketcher->GetData();
+	const auto& curCoordinateSystem = mySketcher->GetCoordinateSystem();
+	
+	gp_Dir normal = getDirection(curSelectedFace);
+	fDrill->Dir.setValue(Base::Vector3d(-normal.X(), -normal.Y(), -normal.Z()));
+
+	std::vector< Base::Vector3d> vecLines;
+	bool isStartPoint = true;
+	for (Standard_Integer i = 1; i <= sData->Length(); i++)
+	{
+		auto myCurObject = Handle(Sketcher_Object)::DownCast(sData->Value(i));
+		if (myCurObject->GetGeometryType() == PointSketcherObject)
+		{
+			auto drawnPnt = Handle(Geom2d_CartesianPoint)::DownCast(myCurObject->GetGeometry());
+			auto curPnt2d = gp_Pnt2d(drawnPnt->X(), drawnPnt->Y());
+			Handle(Geom_CartesianPoint) Geom_Point = new Geom_CartesianPoint(ElCLib::To3d(curCoordinateSystem.Ax2(), curPnt2d));
+			vecLines.push_back(Base::Vector3d(Geom_Point->X(), Geom_Point->Y(), Geom_Point->Z()));
+		}
+	}
+
+	fDrill->Nodes.setValues(vecLines);
+	fDrill->execute();
+
+	// create shape
+	fDrill->BuildGraphicShape();
+	auto drillGraphicShape = fDrill->getGraphicShape();
+	createShape(fDrill);
+	
+	// stop sketching
 	actionStop2dSketch();
 }
 
@@ -753,14 +839,24 @@ void OCCOpenGL::actionPolylineCutting()
 	myCurrentMode = SketcherPolyline;
 	actionStart2dSketch();
 	onInputLines();
+	mySketcher->SetPolylineMode(Standard_True);
 	activateCursor(SketcherPolyline);
 }
 
 void OCCOpenGL::actionCurveCutting()
 {
+	myCurrentMode = SketcherCurve;
 	actionStart2dSketch();
 	onInputBezierCurve();
 	activateCursor(SketcherCurve);
+}
+
+void OCCOpenGL::actionDrillHoles(void)
+{
+	myCurrentMode = SketcherDrill;
+	actionStart2dSketch();
+	onInputPoints();
+	activateCursor(SketcherDrill);
 }
 
 void OCCOpenGL::objSelected()
@@ -818,6 +914,7 @@ void OCCOpenGL::activateCursor(const CurrentAction3d mode) {
 		break;
 	case SketcherPolyline:
 	case SketcherCurve:
+	case SketcherDrill:
 		setCursor(*globPanCursor);
 		break;
 	case CurAction3d_Nothing:
@@ -851,37 +948,63 @@ void OCCOpenGL::onRButtonUp(const int /*theFlags*/, const QPoint thePoint)
 		for (auto f : featureWorkSpace)
 		{
 			std::cout << "mustExecute? " << f->mustExecute() << std::endl;
-			if (f->mustExecute()) f->execute();
+			if (f->mustExecute())
+			{
+				f->execute();
+				std::vector< App::Property*> vecProp;
+				f->getPropertyList(vecProp);
+				for (auto & p : vecProp) f->onChanged(p);
+			}
 		}
-		Redraw();
+		slotRedraw();
 	});
 	menu.addAction(openAct);
 	menu.addSeparator();
 	
 	if (!curSelectedFace.IsNull())
 	{
-		openAct = new QAction("Sketch lines on the face", this);
+		openAct = new QAction("Polygon cut", this);
 		connect(openAct, &QAction::triggered, [=]() {
 			actionPolylineCutting();
 		});
 		menu.addAction(openAct);
 
-		openAct = new QAction("Sketch curves on the face", this);
+		openAct = new QAction("Curve cut", this);
 		connect(openAct, &QAction::triggered, [=]() {
-
 			actionCurveCutting();
 		});
 		menu.addAction(openAct);
 
-		if (myCurrentMode == SketcherPolyline )
+		openAct = new QAction("Drill holes", this);
+		connect(openAct, &QAction::triggered, [=]() {
+			actionDrillHoles();
+		});
+		menu.addAction(openAct);
+
+		switch (myCurrentMode)
 		{
-			openAct = new QAction("Complete sketching", this);
+		case SketcherPolyline:
+		case SketcherCurve:
+			openAct = new QAction("Apply", this);
 			connect(openAct, &QAction::triggered, [=]() {
-				actionComplete2dSketch();
+				actionApplyPolyCut();
 			});
 			menu.addAction(openAct);
+			break;
+		case SketcherDrill:
+			openAct = new QAction("Apply", this);
+			connect(openAct, &QAction::triggered, [=]() {
+				actionApplyDrill();
+			});
+			break;
+		}
 
-			openAct = new QAction("Stop sketching", this);
+		if (myCurrentMode == SketcherCurve ||
+			myCurrentMode == SketcherPolyline ||
+			myCurrentMode == SketcherDrill)
+		{
+			menu.addAction(openAct);
+			openAct = new QAction("Cancel", this);
 			connect(openAct, &QAction::triggered, [=]() {
 				actionStop2dSketch();
 			});
@@ -953,14 +1076,30 @@ void OCCOpenGL::onMouseMove(const int theFlags, const QPoint thePoint)
 		myYmax = thePoint.y();
 	}
 
-	if (myCurrentMode == SketcherPolyline || myCurrentMode == SketcherCurve)
+	switch (myCurrentMode)
 	{
+	case OCCOpenGL::CurAction3d_Nothing:
+		break;
+	case OCCOpenGL::CurAction3d_DynamicZooming:
+		break;
+	case OCCOpenGL::CurAction3d_WindowZooming:
+		break;
+	case OCCOpenGL::CurAction3d_DynamicPanning:
+		break;
+	case OCCOpenGL::CurAction3d_GlobalPanning:
+		break;
+	case OCCOpenGL::CurAction3d_DynamicRotation:
+		break;
+	case OCCOpenGL::SketcherPolyline:
+	case OCCOpenGL::SketcherCurve:
+	case OCCOpenGL::SketcherDrill:
 		myView->Convert(thePoint.x(), thePoint.y(), my_v3dX, my_v3dY, my_v3dZ);
 		myView->Proj(projVx, projVy, projVz);
 		mySketcher->OnMouseMoveEvent(my_v3dX, my_v3dY, my_v3dZ, projVx, projVy, projVz);
-		//mySketcher->OnMouseMoveEvent(thePoint.x(), thePoint.y());
+		break;
+	default:
+		break;
 	}
-
 }
 
 
@@ -1148,41 +1287,76 @@ void OCCOpenGL::createShape(Base::BaseClass* obj)
 			primitiveItem = new QTreeWidgetItem(QStringList(primName));
 		}
 		// Cut operation
-		if (prim->isDerivedFrom(Part::FeaturePartBoolean::getClassTypeId()))
-		{
-			if (prim->getTypeId() == Part::FeatureCut::getClassTypeId())
-			{
-				primName = QString("Cut ") + helm->AssignCreatedShape(prim);
-				primitiveIcon.addFile(":/Resources/cube_crop.png");
-				primitiveItem = new QTreeWidgetItem(QStringList(primName));
-				auto pCut = dynamic_cast<Part::FeatureCut*>(prim);
-				for (auto it = objMapping.begin(); it!=objMapping.end();)
-				{
-					auto p = *it;
-					if (p.second == pCut->BaseFeature.getValue() || p.second == pCut->ToolFeature.getValue())
-					{
-						auto tbCut = dynamic_cast<Part::FeaturePrimitive*>(p.second);
-						myContext->Remove(tbCut->getGraphicShape(), Standard_True);
-						delete p.first;
-						objMapping.erase(p.first);
-						it = objMapping.begin();
-					}
-					else
-					{
-						++it;
-					}
-				}
+		//if (prim->isDerivedFrom(Part::FeaturePolycut::getClassTypeId()) ||
+		//	prim->isDerivedFrom(Part::FeaturePartBoolean::getClassTypeId()))
 
-				// Add property to its child
-				std::vector<App::Property*> pList;
-				prim->getPropertyList(pList);
-				for (auto prop : pList)
+		if (prim->getTypeId() == Part::FeatureDrill::getClassTypeId())
+		{
+			primName = QString("Drill ") + helm->AssignCreatedShape(prim);
+			primitiveIcon.addFile(":/Resources/cube_crop.png");
+			primitiveItem = new QTreeWidgetItem(QStringList(primName));
+			auto pDrill = dynamic_cast<Part::FeatureDrill*>(prim);
+			for (auto it = objMapping.begin(); it != objMapping.end();)
+			{
+				auto p = *it;
+				if (p.second == pDrill->BaseFeature.getValue())
 				{
-					if (prop->isDerivedFrom(Part::PropertyShapeHistory::getClassTypeId())) continue;
-					QTreeWidgetItem *tbWidget = new QTreeWidgetItem(QStringList(prop->getName()));
-					primitiveItem->addChild(tbWidget);
-					objMapping[tbWidget] = prop;
+					auto tbCut = dynamic_cast<Part::FeaturePrimitive*>(p.second);
+					myContext->Remove(tbCut->getGraphicShape(), Standard_True);
+					delete p.first;
+					objMapping.erase(p.first);
+					it = objMapping.begin();
 				}
+				else
+				{
+					++it;
+				}
+			}
+
+			// Add property to its child
+			std::vector<App::Property*> pList;
+			prim->getPropertyList(pList);
+			for (auto prop : pList)
+			{
+				if (prop->isDerivedFrom(Part::PropertyShapeHistory::getClassTypeId())) continue;
+				QTreeWidgetItem *tbWidget = new QTreeWidgetItem(QStringList(prop->getName()));
+				primitiveItem->addChild(tbWidget);
+				objMapping[tbWidget] = prop;
+			}
+		}
+		else if (prim->getTypeId() == Part::FeaturePolyCut::getClassTypeId() ||
+			prim->getTypeId() == Part::FeaturePartBoolean::getClassTypeId())
+		{
+			primName = QString("Cut ") + helm->AssignCreatedShape(prim);
+			primitiveIcon.addFile(":/Resources/cube_crop.png");
+			primitiveItem = new QTreeWidgetItem(QStringList(primName));
+			auto pCut = dynamic_cast<Part::FeaturePolyCut*>(prim);
+			for (auto it = objMapping.begin(); it!=objMapping.end();)
+			{
+				auto p = *it;
+				if (p.second == pCut->BaseFeature.getValue() || p.second == pCut->ToolFeature.getValue())
+				{
+					auto tbCut = dynamic_cast<Part::FeaturePrimitive*>(p.second);
+					myContext->Remove(tbCut->getGraphicShape(), Standard_True);
+					delete p.first;
+					objMapping.erase(p.first);
+					it = objMapping.begin();
+				}
+				else
+				{
+					++it;
+				}
+			}
+
+			// Add property to its child
+			std::vector<App::Property*> pList;
+			prim->getPropertyList(pList);
+			for (auto prop : pList)
+			{
+				if (prop->isDerivedFrom(Part::PropertyShapeHistory::getClassTypeId())) continue;
+				QTreeWidgetItem *tbWidget = new QTreeWidgetItem(QStringList(prop->getName()));
+				primitiveItem->addChild(tbWidget);
+				objMapping[tbWidget] = prop;
 			}
 		}
 

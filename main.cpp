@@ -25,6 +25,10 @@ int main(int argc, char *argv[])
 #include "FeatureBox.h"
 #include "FeaturePartBoolean.h"
 #include "FeaturePartCut.h"
+#include "FeaturePolyCut.h"
+#include "FeaturePolyline.h"
+#include "FeatureBezierCurve.h"
+#include "FeatureDrill.h"
 
 void InitComponents()
 {
@@ -41,6 +45,7 @@ void InitComponents()
 	App::Property::init();
 	App::PropertyContainer::init();
 	App::PropertyLists::init();
+	App::PropertyBool::init();
 	App::PropertyInteger::init();
 	App::PropertyIntegerConstraint::init();
 	App::PropertyIntegerList::init();
@@ -61,4 +66,8 @@ void InitComponents()
 	Part::FeatureCylinder::init();
 	Part::FeaturePartBoolean::init();
 	Part::FeatureCut::init();
+	Part::FeaturePolyCut::init();
+	Part::FeaturePolyline::init();
+	Part::FeatureBezierCurve::init();
+	Part::FeatureDrill::init();
 }

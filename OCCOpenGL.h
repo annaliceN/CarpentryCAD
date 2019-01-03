@@ -41,7 +41,8 @@ public:
         CurAction3d_GlobalPanning,
         CurAction3d_DynamicRotation,
 		SketcherPolyline,
-		SketcherCurve
+		SketcherCurve,
+		SketcherDrill
     };
 
 	enum InterMode
@@ -132,11 +133,14 @@ protected:
     virtual void onRButtonDown(const int theFlags, const QPoint thePoint);
     virtual void onMouseWheel(const int theFlags, const int theDelta, const QPoint thePoint);
     virtual void onLButtonUp(const int theFlags, const QPoint thePoint);
-	void actionStart2dSketch();
-	void actionComplete2dSketch();
-	void actionStop2dSketch();
-	void actionPolylineCutting();
-	void actionCurveCutting();
+	void actionStart2dSketch(void);
+	gp_Dir getDirection(const TopoDS_Face & face);
+	void actionApplyPolyCut(void);
+	void actionApplyDrill(void);
+	void actionStop2dSketch(void);
+	void actionPolylineCutting(void);
+	void actionCurveCutting(void);
+	void actionDrillHoles(void);
 	void initCursors();
 	void activateCursor(const CurrentAction3d mode);
     virtual void onMButtonUp(const int theFlags, const QPoint thePoint);

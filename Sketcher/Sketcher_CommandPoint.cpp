@@ -45,10 +45,11 @@ Standard_Boolean Sketcher_CommandPoint::MouseInputEvent(const gp_Pnt2d& thePnt2d
 
 	case Input_Point:
 	{
-		Handle(Geom2d_CartesianPoint) myGeom2d_Point = new Geom2d_CartesianPoint(curPnt2d);
-
+		Handle(Geom2d_CartesianPoint) myGeom2d_Point
+			= new Geom2d_CartesianPoint(curPnt2d);
 		Handle(Geom_CartesianPoint) myGeom_Point = new Geom_CartesianPoint(ElCLib::To3d(curCoordinateSystem.Ax2(), curPnt2d));
 		Handle(AIS_Point) myAIS_Point = new AIS_Point(myGeom_Point);
+		myAIS_Point->SetColor(Quantity_NOC_RED);
 		myContext->Display(myAIS_Point, Standard_True);
 
 		AddObject(myGeom2d_Point, myAIS_Point, PointSketcherObject);

@@ -17,11 +17,13 @@ MyPropertyWidget::MyPropertyWidget(QWidget *parent /* = 0 */)
 	ui.tableWidget->setFocusPolicy(Qt::ClickFocus);
 	setFeatures(QDockWidget::DockWidgetFloatable | QDockWidget::DockWidgetMovable);
 
-	connect(this, SIGNAL(VisibilityChangeSignal(void*)), parent, SLOT(primitiveVisibilityChanged(void*)));
-	connect(this, SIGNAL(NormalDirectionChangeSignal(MyPrimitive*)), parent, SLOT(primitiveNormalChanged(MyPrimitive*)));
-	connect(this, SIGNAL(LumberTypeChangeSignal(MyPrimitive*)), parent, SLOT(primitiveMetalTypeChanged(MyPrimitive*)));
-	connect(this, SIGNAL(sigRedraw()), parent, SLOT(slotRedraw()));
-	connect(this, SIGNAL(sigLumberLengthChanged(MyLumber*, double)), parent, SLOT(onLumberLengthChanged(MyLumber*, double)));
+	//connect(this, SIGNAL(VisibilityChangeSignal(void*)), parent, SLOT(primitiveVisibilityChanged(void*)));
+	//connect(this, SIGNAL(NormalDirectionChangeSignal(MyPrimitive*)), parent, SLOT(primitiveNormalChanged(MyPrimitive*)));
+	//connect(this, SIGNAL(LumberTypeChangeSignal(MyPrimitive*)), parent, SLOT(primitiveMetalTypeChanged(MyPrimitive*)));
+	//connect(this, SIGNAL(sigLumberLengthChanged(MyLumber*, double)), parent, SLOT(onLumberLengthChanged(MyLumber*, double)));
+	//connect(this, SIGNAL(sigRedraw()), parent, SLOT(slotRedraw()));
+	connect(ui.tableWidget, SIGNAL(itemSelectionChanged()), parent, SLOT(slotRedraw()));
+	
 
 	currentButton = NULL;
 	currentCheckBox = NULL;
@@ -52,11 +54,16 @@ void MyPropertyWidget::WritePropertiesToPropWidget(Base::BaseClass* obj)
 	else if (obj->isDerivedFrom(App::Property::getClassTypeId()))
 	{
 		auto prop = dynamic_cast<App::Property*>(obj);
-		prop->touch();
+		
 		if (prop->getTypeId() == Part::PropertyFeature::getClassTypeId())
 		{
+			prop->touch();
 			auto fp = dynamic_cast<Part::PropertyFeature*>(prop);
 			WritePrimitiveProperties(fp->getValue());
+		}
+		else
+		{
+			WriteAppProperty(prop);
 		}
 	}
 }
@@ -158,6 +165,58 @@ void MyPropertyWidget::WritePrimitiveProperties(Part::FeaturePrimitive* box)
 			++nRow;
 		}
 	}
+
+	tableWidgetItem = new QTableWidgetItem("test column");
+	InsertItem(tableWidgetItem, nRow, 0);
+
+	QComboBox* comboBox = new QComboBox;
+	tableWidget->setCellWidget(nRow, 1, comboBox);
+	QDoubleSpinBox* spinBox = new QDoubleSpinBox;
+
+}
+
+void MyPropertyWidget::WriteAppProperty(App::Property* prop)
+{
+	QTableWidget *tableWidget = ui.tableWidget;
+	tableWidget->setRowCount(1);
+
+	if (prop->getTypeId() == App::PropertyBool::getClassTypeId())
+	{
+		auto pb = dynamic_cast<App::PropertyBool*> (prop);
+		auto tableWidgetItem = new QTableWidgetItem(pb->getName());
+		InsertItem(tableWidgetItem, 0, 0);
+		QCheckBox* checkBox = new QCheckBox;
+		checkBox->setChecked(pb->getValue());
+		tableWidget->setCellWidget(0, 1, checkBox);
+
+		connect(checkBox, static_cast<void (QCheckBox::*)(int)>(&QCheckBox::stateChanged),
+			[=](int val) {
+			pb->setValue(val);
+			std::cout << pb->getValue() << std::endl;
+			emit sigRedraw();
+		});
+	}
+
+	else if (prop->getTypeId() == App::PropertyFloat::getClassTypeId())
+	{
+		auto pf = dynamic_cast<App::PropertyFloat*> (prop);
+		auto tableWidgetItem = new QTableWidgetItem(pf->getName());
+		InsertItem(tableWidgetItem, 0, 0);
+
+		QDoubleSpinBox* spinBox = new QDoubleSpinBox;
+		spinBox->setRange(0, 200);
+		spinBox->setValue(pf->getValue());
+		tableWidget->setCellWidget(0, 1, spinBox);
+
+		connect(spinBox, static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged),
+			[=](double val) {
+			pf->setValue(val);
+			std::cout << pf->getValue() << std::endl;
+			curPrimitive->onChanged(pf);
+			emit sigRedraw();
+		});
+	}
+	
 }
 
 void MyPropertyWidget::ShowColorSelection()
@@ -366,6 +425,12 @@ void MyPropertyWidget::WriteLumberProperties(MyLumber *lumber)
 	InsertItem(tableWidgetItem, 11, 1);
 	tableWidgetItem = new QTableWidgetItem("Mass");
 	InsertItem(tableWidgetItem, 12, 0);
+}
+
+void MyPropertyWidget::mousePressEvent(QMouseEvent * event)
+{
+	std::cout << "laile mouse!" << std::endl;
+	QDockWidget::mousePressEvent(event);
 }
 
 void MyPropertyWidget::onLengthChanged(int length)

@@ -30,6 +30,9 @@ signals:
 	void sigLumberLengthChanged(MyLumber*, double);
 	void sigRedraw(void);
 
+protected:
+	void mousePressEvent(QMouseEvent *event);
+
 public slots:
 	void WritePropertiesToPropWidget(Base::BaseClass* obj);
 	//void WritePropertiesToPropWidget(CMesh *mesh_);
@@ -45,6 +48,7 @@ private:
 	void InsertItem(QTableWidgetItem* item, int rowIndex, int columnIndex);
 	void InsertMergeRow(QTableWidgetItem* item, int rowIndex);
 	void WritePrimitiveProperties(Part::FeaturePrimitive* box);
+	void WriteAppProperty(App::Property * prop);
 	void WriteCylinderProperties(MyCylinder* cylinder);
 	void UpdateBoxProperties(MyBox * box);
 	// 	void WritePartialCylinderProperties(MyPartialCylinder* cylinder);
@@ -54,7 +58,7 @@ private:
 	// 	void WriteTorusProperties(MyTorus* torus);
 	// 	void WritePartialTorusProperties(MyPartialTorus* torus);
 	void WriteLumberProperties(MyLumber* lumber);
-	
+
 
 	QPushButton* GenColorButton(Eigen::Vector3d color);
 	QCheckBox* GenCheckBox(bool checked);

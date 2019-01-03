@@ -72,6 +72,10 @@ public:
 	*/
 	Sketcher_ObjectTypeOfMethod GetTypeOfMethod();
 
+	Handle(Geom2d_BezierCurve) GetBezier2D() { return myGeom2d_BezierCurve; }
+
+	Handle(Geom_BezierCurve) GetBezier() { return myGeom_BezierCurve; }
+
 	// Type management
 	DEFINE_STANDARD_RTTIEXT(Sketcher_CommandBezierCurve, Sketcher_Command)
 

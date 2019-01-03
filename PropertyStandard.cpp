@@ -641,6 +641,78 @@ void PropertyBool::Paste(const Property &from)
 }
 
 //**************************************************************************
+//**************************************************************************
+// PropertyVector
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+TYPESYSTEM_SOURCE(App::PropertyVector, App::Property);
+
+//**************************************************************************
+// Construction/Destruction
+
+
+PropertyVector::PropertyVector()
+{
+
+}
+
+
+PropertyVector::~PropertyVector()
+{
+
+}
+
+//**************************************************************************
+// Base class implementer
+
+
+void PropertyVector::setValue(const Base::Vector3d &vec)
+{
+	aboutToSetValue();
+	_cVec = vec;
+	hasSetValue();
+}
+
+void PropertyVector::setValue(double x, double y, double z)
+{
+	aboutToSetValue();
+	_cVec.Set(x, y, z);
+	hasSetValue();
+}
+
+const Base::Vector3d & PropertyVector::getValue(void)const
+{
+	return _cVec;
+}
+
+void PropertyVector::Save(Base::Writer &writer) const
+{
+	//writer.Stream() << writer.ind() << "<PropertyVector valueX=\"" << _cVec.x << "\" valueY=\"" << _cVec.y << "\" valueZ=\"" << _cVec.z << "\"/>" << endl;
+}
+
+void PropertyVector::Restore(Base::XMLReader &reader)
+{
+
+}
+
+
+Property *PropertyVector::Copy(void) const
+{
+	PropertyVector *p = new PropertyVector();
+	p->_cVec = _cVec;
+	return p;
+}
+
+void PropertyVector::Paste(const Property &from)
+{
+	aboutToSetValue();
+	_cVec = dynamic_cast<const PropertyVector&>(from)._cVec;
+	hasSetValue();
+}
+
+
+
+//**************************************************************************
 // PropertyVectorList
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -697,7 +769,7 @@ void PropertyVectorList::setValues(const std::vector<Base::Vector3d>& values)
 
 void PropertyVectorList::Save(Base::Writer &writer) const
 {
-	
+
 }
 
 void PropertyVectorList::Restore(Base::XMLReader &reader)
@@ -707,12 +779,12 @@ void PropertyVectorList::Restore(Base::XMLReader &reader)
 
 void PropertyVectorList::SaveDocFile(Base::Writer &writer) const
 {
-
+	
 }
 
 void PropertyVectorList::RestoreDocFile(Base::Reader &reader)
 {
-	
+
 }
 
 Property *PropertyVectorList::Copy(void) const
