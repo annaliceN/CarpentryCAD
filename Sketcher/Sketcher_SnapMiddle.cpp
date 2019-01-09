@@ -26,6 +26,7 @@ Sketcher_SnapMiddle::~Sketcher_SnapMiddle()
 */
 void Sketcher_SnapMiddle::SelectEvent()
 {
+	Sketcher_ObjectGeometryType bestGeometricType;
 	findbestPnt2d = Standard_False;
 	minDistance = minimumSnapDistance;
 
@@ -39,14 +40,18 @@ void Sketcher_SnapMiddle::SelectEvent()
 			objectPnt2d = curGeom2d_Point->Pnt2d();
 			if (count())
 			{
+				bestGeometricType = myGeometryType;
 				bestPnt2d = objectPnt2d;
 				curHilightedObj = mySObject->GetAIS_Object();
 			}
 			break;
-		case LineSketcherObject:	curGeom2d_Edge = Handle(Geom2d_Edge)::DownCast(mySObject->GetGeometry());
+		case ExistingEdgeObject:
+		case LineSketcherObject:	
+			curGeom2d_Edge = Handle(Geom2d_Edge)::DownCast(mySObject->GetGeometry());
 			ProjectOnCurve.Init(curPnt2d, curGeom2d_Edge, curGeom2d_Edge->StartParameter(), curGeom2d_Edge->EndParameter());
 			if (countProject())
 			{
+				bestGeometricType = myGeometryType;
 				bestPnt2d = curGeom2d_Edge->MiddlePnt();
 				curHilightedObj = mySObject->GetAIS_Object();
 			}
@@ -56,6 +61,7 @@ void Sketcher_SnapMiddle::SelectEvent()
 			ProjectOnCurve.Init(curPnt2d, curGeom2d_Arc);
 			if (countProject())
 			{
+				bestGeometricType = myGeometryType;
 				bestPnt2d = curGeom2d_Arc->MiddlePnt();
 				curHilightedObj = mySObject->GetAIS_Object();
 			}
@@ -65,8 +71,14 @@ void Sketcher_SnapMiddle::SelectEvent()
 	}
 
 	if (minDistance == minimumSnapDistance)
+	{
 		bestPnt2d = curPnt2d;
-	else   findbestPnt2d = Standard_True;
+	}
+	else
+	{
+		findbestGeometryType = bestGeometricType;
+		findbestPnt2d = Standard_True;
+	}
 
 	minDistance = bestPnt2d.Distance(curPnt2d);
 }

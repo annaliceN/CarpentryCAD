@@ -7,6 +7,7 @@
 
 #include "Sketcher_Object.h"
 #include "Sketcher_SnapType.h"
+#include "Geom2d_Edge.h"
 
 #include <TColStd_HSequenceOfTransient.hxx>
 #include <AIS_InteractiveContext.hxx>
@@ -83,6 +84,11 @@ public:
 	*/
 	void SetMinDistance(const Standard_Real& aPrecise);
 
+	size_t SizeOfAttachedEdges() const { return vecSnappedExistingEdges.size(); };
+
+	Standard_Boolean isFindbestPnt2d() { return findbestPnt2d; };
+
+	Sketcher_ObjectGeometryType	GetFindbestGeometryType() { return findbestGeometryType; };
 	/**
 	* \fn MouseInputEvent(const gp_Pnt2d& thePnt2d)
 	* \brief input event handler
@@ -195,6 +201,7 @@ protected:
 	gp_Pnt2d								objectPnt2d;
 	gp_Pnt2d								bestPnt2d;
 	Standard_Boolean						findbestPnt2d;
+	Sketcher_ObjectGeometryType				findbestGeometryType;
 
 	Handle(Geom2d_CartesianPoint)			curGeom2d_Point;
 	Standard_Real							minimumSnapDistance;
@@ -205,6 +212,8 @@ protected:
 	Handle(Geom_Plane)						myPlane;
 	TopoDS_Edge								FirstEdge;
 	TopoDS_Edge								SecondEdge;
+
+	std::vector<Handle(Geom2d_Edge)>		vecSnappedExistingEdges;
 };
 
 #endif

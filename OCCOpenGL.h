@@ -82,6 +82,8 @@ public:
 	MyObjectWidget* getObjectWidget() { return objectWidget; };
 	QList<QAction*>* getDrawActions();
 
+	void setSelectionOptions(bool isPreselectionEnabled, bool isSelectionEnabled);
+
 	// Geometric operations
 	void FuseSelected();
 	void IntersectSelected();
@@ -226,6 +228,9 @@ private:
 	QCursor* rotCursor = NULL;
 
 	Handle(Graphic3d_Camera) myPreviousCam;
+
+	bool myPreselectionEnabled;
+	bool mySelectionEnabled;
 };
 
 #endif 

@@ -40,6 +40,7 @@ void Sketcher_SnapLineParallel::SelectEvent()
 			switch (myGeometryType)
 			{
 			case PointSketcherObject:	break;
+			case ExistingEdgeObject:
 			case LineSketcherObject:	curGeom2d_Line = Handle(Geom2d_Line)::DownCast(mySObject->GetGeometry());
 				tempDir2d = curGeom2d_Line->Lin2d().Direction();
 				checkparallel();

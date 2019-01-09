@@ -29,6 +29,7 @@ Sketcher_SnapIntersection::~Sketcher_SnapIntersection()
 */
 void Sketcher_SnapIntersection::SelectEvent()
 {
+	Sketcher_ObjectGeometryType bestGeometricType;
 	findbestPnt2d = Standard_False;
 	minDistance = minimumSnapDistance;
 	for (Standard_Integer i = 1; i <= data->Length(); i++)
@@ -42,11 +43,13 @@ void Sketcher_SnapIntersection::SelectEvent()
 			objectPnt2d = curGeom2d_Point->Pnt2d();
 			if (count())
 			{
+				bestGeometricType = myGeometryType;
 				bestPnt2d = objectPnt2d;
 				curHilightedObj = mySObject->GetAIS_Object();
 				curHilightedObj2 = curHilightedObj;
 			}
 			break;
+		case ExistingEdgeObject:
 		case LineSketcherObject:
 			cur1Geom2d_Edge = Handle(Geom2d_Edge)::DownCast(mySObject->GetGeometry());
 			cur1Geom2d_Line->SetLin2d(cur1Geom2d_Edge->Lin2d());
@@ -63,8 +66,14 @@ void Sketcher_SnapIntersection::SelectEvent()
 	}
 
 	if (minDistance == minimumSnapDistance)
+	{
 		bestPnt2d = curPnt2d;
-	else   findbestPnt2d = Standard_True;
+	}
+	else
+	{
+		findbestGeometryType = bestGeometricType;
+		findbestPnt2d = Standard_True;
+	}
 }
 
 /**

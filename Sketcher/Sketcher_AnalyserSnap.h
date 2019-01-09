@@ -16,6 +16,7 @@
 #include "Sketcher_SnapLineParallel.h"
 #include "Sketcher_SnapLinePerpendicular.h"
 #include "Sketcher_SnapTangent.h"
+#include "Sketcher_SnapExisitingEdge.h"
 
 #include <TColStd_HSequenceOfTransient.hxx>
 #include <AIS_InteractiveContext.hxx>
@@ -141,6 +142,12 @@ public:
 	*/
 	gp_Pnt2d MouseMoveException(const gp_Pnt2d& p1, const gp_Pnt2d& thePnt2d, TangentType CType, Standard_Boolean TangentOnly);
 
+	int GetflagPolyCut() { return flagPolyCut;}
+
+	void SetFlagPolyCut() { flagPolyCut = 1; donePolyCut = false; }
+
+	bool DonePolyCut() { return donePolyCut;}
+
 	// Type management
 	DEFINE_STANDARD_RTTIEXT(Sketcher_AnalyserSnap, MMgt_TShared)
 
@@ -153,6 +160,8 @@ private:
 	* \return void
 	*/
 	void SnapAnalyserEvent();
+
+	void SnapPolyCutEvent();
 
 	/**
 	* \fn AddPoints(const Standard_Real& factor)
@@ -201,6 +210,10 @@ private:
 	Standard_Real							minimumSnapDistance;
 	Standard_Real							bestDist;
 	Standard_Real							curDist;
+
+	int									    flagPolyCut;
+	Standard_Boolean						donePolyCut;
+
 };
 
 #endif

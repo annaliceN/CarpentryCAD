@@ -25,6 +25,7 @@ Sketcher_SnapCenter::~Sketcher_SnapCenter()
 */
 void Sketcher_SnapCenter::SelectEvent()
 {
+	Sketcher_ObjectGeometryType bestGeometricType;
 	findbestPnt2d = Standard_False;
 	minDistance = minimumSnapDistance;
 
@@ -35,18 +36,21 @@ void Sketcher_SnapCenter::SelectEvent()
 		switch (myGeometryType)
 		{
 		case PointSketcherObject:	break;
+		case ExistingEdgeObject:
 		case LineSketcherObject:	break;
 		case CircleSketcherObject:
 		case ArcSketcherObject: 	curGeom2d_Circle = Handle(Geom2d_Circle)::DownCast(mySObject->GetGeometry());
 			ProjectOnCurve.Init(curPnt2d, curGeom2d_Circle);
 			if (countProject())
 			{
+				bestGeometricType = myGeometryType;
 				bestPnt2d = curGeom2d_Circle->Location();
 				curHilightedObj = mySObject->GetAIS_Object();
 			}
 			objectPnt2d = curGeom2d_Circle->Location();
 			if (count())
 			{
+				bestGeometricType = myGeometryType;
 				bestPnt2d = objectPnt2d;
 				curHilightedObj = mySObject->GetAIS_Object();
 			}
@@ -56,8 +60,14 @@ void Sketcher_SnapCenter::SelectEvent()
 	}
 
 	if (minDistance == minimumSnapDistance)
+	{
 		bestPnt2d = curPnt2d;
-	else   findbestPnt2d = Standard_True;
+	}
+	else
+	{
+		findbestGeometryType = bestGeometricType;
+		findbestPnt2d = Standard_True;
+	}
 
 }
 

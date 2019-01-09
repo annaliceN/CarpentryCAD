@@ -29,6 +29,8 @@ gp_Ax3 &theAx3)
 	isTangent = Standard_False;
 	isLine = Standard_False;
 
+	flagPolyCut = 0;
+
 	mySnaps = new TColStd_HSequenceOfTransient();
 	addSnap(new Sketcher_SnapEnd());
 	addSnap(new Sketcher_SnapMiddle());
@@ -38,6 +40,7 @@ gp_Ax3 &theAx3)
 	addSnap(new Sketcher_SnapLineParallel());
 	addSnap(new Sketcher_SnapLinePerpendicular());
 	addSnap(new Sketcher_SnapTangent());
+	addSnap(new Sketcher_SnapExistingEdge());
 }
 
 
@@ -151,6 +154,7 @@ gp_Pnt2d Sketcher_AnalyserSnap::MouseInput(const gp_Pnt2d& thePnt2d)
 	case SnapMiddle:
 	case SnapCenter:
 	case SnapIntersection:
+	case SnapExistingEdge:
 	case SnapNearest:
 		SelectCurSnap();
 		myPnt2d = CurSnap->MouseInputEvent(thePnt2d);
@@ -174,11 +178,39 @@ gp_Pnt2d Sketcher_AnalyserSnap::MouseInput(const gp_Pnt2d& thePnt2d)
 		break;
 	case SnapAnalyse:
 		SnapAnalyserEvent();
+		if (flagPolyCut == 2 && curSnapAnType != SnapNothing)
+		{
+			for (Standard_Integer i = 1; i <= mySnaps->Length(); i++)
+			{
+				CurSnap = Handle(Sketcher_Snap)::DownCast(mySnaps->Value(i));
+				if (CurSnap->GetSnapType() == mySnapAnType)
+				{
+					auto a = CurSnap->isFindbestPnt2d();
+					auto b = CurSnap->GetFindbestGeometryType();
+					if (CurSnap->isFindbestPnt2d() && CurSnap->GetFindbestGeometryType() == ExistingEdgeObject)
+					{
+						flagPolyCut = 3;
+						break;
+					}
+				}
+				
+			}
+		}
 		CurSnap->EraseSnap();
 		mySnapAnType = SnapNothing;
 		break;
+
 	default: break;
 	}
+
+	if (flagPolyCut == 1) flagPolyCut = 2;
+
+	if (flagPolyCut == 3)
+	{
+		std::cout << "complete" << std::endl;
+		donePolyCut = true;
+	}
+
 	return myPnt2d;
 }
 
@@ -197,6 +229,7 @@ gp_Pnt2d Sketcher_AnalyserSnap::MouseMove(const gp_Pnt2d& thePnt2d)
 	case SnapMiddle:
 	case SnapCenter:
 	case SnapIntersection:
+	case SnapExistingEdge:
 	case SnapNearest:
 		SelectCurSnap();
 		myPnt2d = CurSnap->MouseMoveEvent(thePnt2d);
@@ -319,6 +352,91 @@ gp_Pnt2d Sketcher_AnalyserSnap::MouseMoveException(const gp_Pnt2d& p1, const gp_
 * \return void
 */
 void Sketcher_AnalyserSnap::SnapAnalyserEvent()
+{
+	bestDist = minimumSnapDistance * 10;
+	curDist = 0;
+
+	mySeqOfPnt2d.Clear();
+	mySeqOfDistance.Clear();
+	mySeqOfFactor.Clear();
+	mySnapType.Clear();
+	for (Standard_Integer i = 1; i <= mySnaps->Length(); i++)
+	{
+		CurSnap = Handle(Sketcher_Snap)::DownCast(mySnaps->Value(i));
+		switch (CurSnap->GetSnapType())
+		{
+		case SnapEnd:		AddPoints(1);
+			break;
+		case SnapMiddle:	AddPoints(3.5);
+			break;
+		case SnapCenter:	AddPoints(4);
+			break;
+		case SnapIntersection:
+			AddPoints(1);
+			break;
+		case SnapNearest:	AddPoints(8);
+			break;
+		case SnapTangent:	if (isTangent)
+		{
+			CurSnap->setFirstPnt(storedPnt2d, storedTangentType);
+			AddPoints(1);
+		}
+							break;
+		case SnapParallel:
+		case SnapPerpendicular: if (isLine)
+		{
+			CurSnap->setFirstPnt(storedPnt2d);
+			AddPoints(8);
+		}
+								break;
+		default:break;
+		}
+	}
+
+	// modify myPnt2d here
+	curSnapAnType = SnapNothing;
+	for (Standard_Integer j = 1; j <= mySeqOfPnt2d.Length(); j++)
+	{
+		curDist = mySeqOfDistance(j) * mySeqOfFactor(j);
+		if (bestDist > curDist)
+		{
+			bestDist = curDist;
+			myPnt2d = mySeqOfPnt2d(j);
+			curSnapAnType = (Sketcher_SnapType)mySnapType(j);
+		}
+	}
+
+	if (flagPolyCut == 1 && curSnapAnType == SnapNothing)
+	{
+		curSnapAnType = SnapExistingEdge;
+		for (Standard_Integer i = 1; i <= mySnaps->Length(); i++)
+		{
+			CurSnap = Handle(Sketcher_Snap)::DownCast(mySnaps->Value(i));
+			if (CurSnap->GetSnapType() == SnapExistingEdge)
+			{
+				myPnt2d = CurSnap->MouseMoveEvent(myPnt2d);
+			}
+		}
+		
+		//curSnapAnType = SnapExistingEdge;
+	}
+
+	for (Standard_Integer k = 1; k <= mySnaps->Length(); k++)
+	{
+		CurSnap = Handle(Sketcher_Snap)::DownCast(mySnaps->Value(k));
+		if (CurSnap->GetSnapType() == mySnapAnType)
+			break;
+	}
+}
+
+
+
+/**
+* \fn SnapAnalyserEvent()
+* \brief search best point among all possible snaps
+* \return void
+*/
+void Sketcher_AnalyserSnap::SnapPolyCutEvent()
 {
 	bestDist = minimumSnapDistance * 10;
 	curDist = 0;

@@ -12,7 +12,8 @@ enum Sketcher_SnapType
 	SnapTangent,
 	SnapParallel,
 	SnapPerpendicular,
-	SnapAnalyse
+	SnapAnalyse,
+	SnapExistingEdge
 };
 
 #endif

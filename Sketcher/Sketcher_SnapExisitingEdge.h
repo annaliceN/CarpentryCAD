@@ -1,5 +1,5 @@
-#ifndef Sketcher_SnapNEAREST_H
-#define Sketcher_SnapNEAREST_H Sketcher_SnapNEAREST_H
+#ifndef Sketcher_SnapEXISTINGEDGE_H
+#define Sketcher_SnapEXISTINGEDGE_H
 
 #include "Sketcher_Snap.h"
 #include <Geom2d_Curve.hxx>
@@ -7,11 +7,11 @@
 
 class Geom2d_Curve;
 
-class Sketcher_SnapNearest;
-DEFINE_STANDARD_HANDLE(Sketcher_SnapNearest, Sketcher_Snap)
+class Sketcher_SnapExistingEdge;
+DEFINE_STANDARD_HANDLE(Sketcher_SnapExistingEdge, Sketcher_Snap)
 
 //snap searching nearest point at line/circle/arc
-class Sketcher_SnapNearest : public Sketcher_Snap
+class Sketcher_SnapExistingEdge : public Sketcher_Snap
 {
 public:
 
@@ -19,13 +19,13 @@ public:
 	* \fn Sketcher_SnapNearest()
 	* \brief Constructs a Sketcher_SnapNearest
 	*/
-	Sketcher_SnapNearest();
+	Sketcher_SnapExistingEdge();
 
 	/**
-	* \fn ~Sketcher_SnapNearest()
+	* \fn ~Sketcher_SnapExistingEdge()
 	* \brief Destructor
 	*/
-	~Sketcher_SnapNearest();
+	~Sketcher_SnapExistingEdge();
 
 	/**
 	* \fn SelectEvent()
@@ -42,7 +42,7 @@ public:
 	Sketcher_SnapType GetSnapType();
 
 	// Type management
-	DEFINE_STANDARD_RTTIEXT(Sketcher_SnapNearest, Sketcher_Snap)
+	DEFINE_STANDARD_RTTIEXT(Sketcher_SnapExistingEdge, Sketcher_Snap)
 private:
 
 	Handle(Geom2d_Curve)	curGeom2d_Curve;

@@ -468,3 +468,13 @@ void Sketcher::SelectCurCommand()
 			break;
 	}
 }
+
+void Sketcher::SetPolyCut()
+{
+	myAnalyserSnap->SetFlagPolyCut();
+}
+
+Standard_Boolean Sketcher::DonePolyCut()
+{
+	return myAnalyserSnap->DonePolyCut();
+}

@@ -7,6 +7,7 @@ enum Sketcher_ObjectGeometryType
 	LineSketcherObject,
 	CircleSketcherObject,
 	ArcSketcherObject,
-	CurveSketcherObject
+	CurveSketcherObject,
+	ExistingEdgeObject
 };
 #endif

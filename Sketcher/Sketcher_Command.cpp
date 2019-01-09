@@ -170,6 +170,7 @@ void Sketcher_Command::AddObject(const Handle(Geom2d_Geometry)& theGeom2d_Geomet
 */
 void  Sketcher_Command::SetPolylineFirstPnt(const gp_Pnt2d& p1)
 {
+
 }
 
 /**
@@ -191,4 +192,5 @@ Standard_Boolean Sketcher_Command::GetPolylineFirstPnt(gp_Pnt2d& p1)
 */
 void Sketcher_Command::SetPolylineMode(Standard_Boolean mode)
 {
+
 }

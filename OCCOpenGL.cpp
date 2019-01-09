@@ -4,6 +4,7 @@
 #include <QMouseEvent>
 #include <QRubberBand>
 #include <QStyleFactory>
+#include <QMessageBox>
 
 #include <OpenGl_GraphicDriver.hxx>
 #include <V3d_View.hxx>
@@ -17,12 +18,16 @@
 #include <BRepBuilderAPI_MakeWire.hxx>
 
 #include <TopoDS.hxx>
+#include <TopExp.hxx>
 #include <TopExp_Explorer.hxx>
 #include <GeomLProp_SLProps.hxx>
 #include <Geom_BSplineSurface.hxx>
 #include <Geom_BezierSurface.hxx>
 #include <TColgp_Array2OfPnt.hxx>
 #include <ShapeAnalysis_Curve.hxx>
+#include <AIS_TextLabel.hxx>
+#include <GeomLib_IsPlanarSurface.hxx>
+#include <TopOpeBRepBuild_Tools.hxx>
 
 #include "FeaturePartCut.h"
 #include "FeaturePolyline.h"
@@ -155,11 +160,30 @@ void OCCOpenGL::init()
 	myContext->OpenLocalContext();
 	myContext->ActivateStandardMode(TopAbs_FACE);
 	*/
+
+	Handle(AIS_TextLabel) aTextPrs = new AIS_TextLabel();
+	aTextPrs->SetFont("Courier");
+
+	aTextPrs->SetText("hello world");
+	aTextPrs->SetText("OpenCASCADE");
+
+	myContext->Display(aTextPrs, Standard_True);
 }
 
 QList<QAction *> *OCCOpenGL::getDrawActions() {
 	initDrawActions();
 	return myDrawActions;
+}
+
+void OCCOpenGL::setSelectionOptions(bool isPreselectionEnabled, bool isSelectionEnabled)
+{
+	myPreselectionEnabled = isPreselectionEnabled;
+	mySelectionEnabled = isSelectionEnabled;
+	//clear current selection in the viewer
+
+	if (!mySelectionEnabled) {
+		myContext->ClearSelected(Standard_True);
+	}
 }
 
 void OCCOpenGL::initDrawActions() {
@@ -589,13 +613,39 @@ void projectToSketchCoord(const gp_Ax3& myCoordinateSystem, const gp_Pnt& myTemp
 {
 	myCurrentPnt2d.SetX((myTempPnt.X() - myCoordinateSystem.Location().X())*myCoordinateSystem.XDirection().X() + (myTempPnt.Y() - myCoordinateSystem.Location().Y())*myCoordinateSystem.XDirection().Y() + (myTempPnt.Z() - myCoordinateSystem.Location().Z())*myCoordinateSystem.XDirection().Z());
 	myCurrentPnt2d.SetY((myTempPnt.X() - myCoordinateSystem.Location().X())*myCoordinateSystem.YDirection().X() + (myTempPnt.Y() - myCoordinateSystem.Location().Y())*myCoordinateSystem.YDirection().Y() + (myTempPnt.Z() - myCoordinateSystem.Location().Z())*myCoordinateSystem.YDirection().Z());
-
 }
 
 void OCCOpenGL::actionStart2dSketch()
 {
 	if (curSelectedFace.IsNull()) return;
+
+	const Part::TopoShape& tShape = primMapping[curSelectedGraphicShape]->Shape.getShape();
+	int nFaces = tShape.countSubShapes("Face");
 	
+	for (int i = 1; i <= nFaces; ++i)
+	{
+		TopoDS_Shape sh = tShape.getSubShape( (QString("Face")+QString::number(i)).toStdString().c_str());
+		if (sh == curSelectedFace)
+		{
+			std::cout << "Found: " << i << std::endl;
+		}
+	}
+	
+	// construct a edge-face map 
+	TopTools_IndexedDataMapOfShapeListOfShape edgeFaceMap;
+	TopExp::MapShapesAndAncestors(tShape.getShape(), TopAbs_EDGE, TopAbs_FACE, edgeFaceMap);
+
+	BRepAdaptor_Surface adapt(curSelectedFace);
+	if (adapt.GetType() != GeomAbs_Plane) {
+		TopLoc_Location loc;
+		Handle(Geom_Surface) surf = BRep_Tool::Surface(curSelectedFace, loc);
+		if (surf.IsNull() || !GeomLib_IsPlanarSurface(surf).IsPlanar()) {
+			QMessageBox::warning(this, QObject::tr("No planar support"),
+				QObject::tr("You need a planar face as support for a sketch!"));
+			return;
+		}
+	}
+
 	bool Reverse = false;
 	if (curSelectedFace.Orientation() == TopAbs_REVERSED)
 		Reverse = true;
@@ -603,8 +653,8 @@ void OCCOpenGL::actionStart2dSketch()
 	myView->Convert(myXmin, myYmin, my_v3dX, my_v3dY, my_v3dZ);
 	myView->Proj(projVx, projVy, projVz);
 	gp_Pnt ObjOrg(projVx, projVy, projVz);
+	
 	/// compute gp_ax3
-	BRepAdaptor_Surface adapt(curSelectedFace);
 	gp_Pln plane = adapt.Plane();
 	Standard_Boolean ok = plane.Direct();
 	if (!ok) {
@@ -674,10 +724,25 @@ void OCCOpenGL::actionStart2dSketch()
 		newGeomEdge->SetPoints(vEdge[0], vEdge[1]);
 		Handle(AIS_Line) myAIS_Line = new AIS_Line(cpts[0], cpts[1]);
 		myAIS_Line->SetColor(Quantity_NOC_RED);
-		mySketcher->GetAnalyser()->AddObject(newGeomEdge, myAIS_Line, LineSketcherObject);
+		mySketcher->GetAnalyser()->AddObject(newGeomEdge, myAIS_Line, ExistingEdgeObject);
 		
 		/// flag the edge as visited
 		isSketchDataVisited.insert(newGeomEdge);
+
+		TopoDS_Edge curEdge = TopoDS::Edge(edgeExplorer.Current());
+		TopoDS_Face targetFace;
+		bool faceFound = TopOpeBRepBuild_Tools::GetAdjacentFace(curSelectedFace, curEdge,
+			edgeFaceMap, targetFace);
+
+		if (!faceFound)
+		{
+			// This happens, if the part boundary was reached.
+			std::cout << "face not found" << std::endl;
+		}
+		else
+		{
+			std::cout << "face found" << std::endl;
+		}
 	}
 
 	/// set coordinate system
@@ -886,15 +951,18 @@ void OCCOpenGL::actionStop2dSketch()
 void OCCOpenGL::actionPolylineCutting()
 {
 	myCurrentMode = SketcherPolyline;
+	mySketcher->SetPolyCut();
 	actionStart2dSketch();
 	onInputLines();
 	mySketcher->SetPolylineMode(Standard_True);
+	mySketcher->SetSnap(Sketcher_SnapType::SnapAnalyse);
 	activateCursor(SketcherPolyline);
 }
 
 void OCCOpenGL::actionCurveCutting()
 {
 	myCurrentMode = SketcherCurve;
+	mySketcher->SetPolyCut();
 	actionStart2dSketch();
 	onInputBezierCurve();
 	activateCursor(SketcherCurve);
@@ -1129,6 +1197,7 @@ void OCCOpenGL::onMouseMove(const int theFlags, const QPoint thePoint)
 		break;
 	case OCCOpenGL::SketcherPolyline:
 	case OCCOpenGL::SketcherCurve:
+		if (mySketcher->DonePolyCut()) mySketcher->OnCancel();
 	case OCCOpenGL::SketcherDrill:
 		myView->Convert(thePoint.x(), thePoint.y(), my_v3dX, my_v3dY, my_v3dZ);
 		myView->Proj(projVx, projVy, projVz);
@@ -1202,7 +1271,8 @@ void OCCOpenGL::multiInputEvent(const int x, const int y)
 
 void OCCOpenGL::moveEvent(const int x, const int y)
 {
-	myContext->MoveTo(x, y, myView, Standard_True);
+	if (myCurrentMode == CurAction3d_DynamicRotation)
+		myContext->MoveTo(x, y, myView, Standard_True);
 }
 
 void OCCOpenGL::multiMoveEvent(const int x, const int y)
@@ -1314,6 +1384,23 @@ void OCCOpenGL::createShape(Base::BaseClass* obj)
 
 		if (prim->getTypeId() == Part::FeatureBox::getClassTypeId())
 		{
+			try
+			{
+				TopoDS_Shape shape1 = prim->Shape.getShape().getSubShape("Edge20");
+			}
+			catch (...){
+				std::cout << "error" << std::endl;
+			}
+			
+			std::cout << prim->Shape.getShape().countSubShapes("Edge") << std::endl;
+// 			TopoDS_Edge face1 = TopoDS::Edge(shape1);
+// 			if (!face1.IsNull()) {
+// 				std::cout << "Got face 1" << std::endl;
+// 			}
+// 			else
+// 			{
+// 				std::cout << "Cannot get face 1" << std::endl;
+// 			}
 			primName = QString("Box ") + helm->AssignCreatedShape(prim);
 			primitiveIcon.addFile(":/Resources/cube_crop.png");
 			primitiveItem = new QTreeWidgetItem(QStringList(primName));

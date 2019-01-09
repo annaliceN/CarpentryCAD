@@ -40,6 +40,7 @@ void Sketcher_SnapLine::SelectNearest()
 		{
 		case PointSketcherObject:
 			break;
+		case ExistingEdgeObject:
 		case LineSketcherObject:
 			curGeom2d_Line = Handle(Geom2d_Line)::DownCast(mySObject->GetGeometry());
 			ProjectOnCurve.Init(curPnt2d, curGeom2d_Line);

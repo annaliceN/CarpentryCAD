@@ -260,6 +260,10 @@ public:
 
 	Handle(Sketcher_Command) GetCurrentCommand() { return CurCommand; }
 
+	void SetPolyCut();
+
+	Standard_Boolean DonePolyCut();
+
 private:
 	/**
 	* \fn ProjectPointOnPlane(const V3d_Coordinate &v3dX,const V3d_Coordinate &v3dY,const V3d_Coordinate &v3dZ,const Quantity_Parameter& projVx,const Quantity_Parameter& projVy,const Quantity_Parameter& projVz)
@@ -288,6 +292,7 @@ private:
 	* \return void
 	*/
 	void SelectCurCommand();
+
 
 private:
 	Handle(AIS_InteractiveContext)			myContext;
