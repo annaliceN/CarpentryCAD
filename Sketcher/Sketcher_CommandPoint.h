@@ -7,19 +7,6 @@
 class Sketcher_CommandPoint;
 DEFINE_STANDARD_HANDLE(Sketcher_CommandPoint, Sketcher_Command)
 
-class RefPnt
-{
-public:
-	RefPnt(const gp_Pnt2d& p, const double d, const Handle(Geom2d_Edge) e) : pnt(p), dist(d), edge(e) {};
-
-	gp_Pnt2d pnt;
-	double dist;
-	Handle(Geom2d_Edge) edge;
-	bool operator<(const RefPnt& other) const
-	{
-		return dist < other.dist;
-	}
-};
 
 //Command entering Point
 class Sketcher_CommandPoint : public Sketcher_Command
@@ -83,8 +70,6 @@ private:
 
 	//members
 	PointAction		myPointAction;
-	Geom2dAPI_ProjectPointOnCurve ProjectOnCurve;
-
 };
 
 #endif

@@ -194,3 +194,13 @@ void Sketcher_Command::SetPolylineMode(Standard_Boolean mode)
 {
 
 }
+
+void Sketcher_Command::ClearRefLines()
+{
+	std::cout << "Clear ref lines " << vecRefLines.size() << std::endl;
+	for (auto& line : vecRefLines)
+	{
+		myContext->Remove(line, Standard_False);
+	}
+	myContext->UpdateCurrentViewer();
+}

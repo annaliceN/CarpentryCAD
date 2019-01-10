@@ -28,6 +28,21 @@ class gp_Pnt2d;
 class Sketcher_Command;
 DEFINE_STANDARD_HANDLE(Sketcher_Command, MMgt_TShared)
 
+
+class RefPnt
+{
+public:
+	RefPnt(const gp_Pnt2d& p, const double d, const Handle(Geom2d_Edge) e) : pnt(p), dist(d), edge(e) {};
+
+	gp_Pnt2d pnt;
+	double dist;
+	Handle(Geom2d_Edge) edge;
+	bool operator<(const RefPnt& other) const
+	{
+		return dist < other.dist;
+	}
+};
+
 //base class of commands entering objects
 class Sketcher_Command : public MMgt_TShared
 {
@@ -179,6 +194,9 @@ public:
 	* \param mode Standard_Boolean
 	*/
 	virtual void SetPolylineMode(Standard_Boolean mode);
+
+	void ClearRefLines();
+
 	// Type management
 	DEFINE_STANDARD_RTTIEXT(Sketcher_Command, MMgt_TShared)
 
@@ -206,6 +224,8 @@ protected:
 	Handle(AIS_Line)						myRubberLine;
 	TCollection_ExtendedString				ObjectName;
 	Standard_Integer						ObjectCounter;
+	Geom2dAPI_ProjectPointOnCurve			ProjectOnCurve;
+	std::vector<Handle(AIS_Line)>			vecRefLines;
 };
 
 #endif

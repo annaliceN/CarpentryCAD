@@ -18,15 +18,15 @@ WARNING: This repository is still under development, please use it with cautions
 
 ### Jan. 4th
 
-- [x] understand onChanged mechanism
-- [x] understand mustExecute mechanism
-- [x] implement drill and cut operations
-- [x] implement HELM feedback mechanism
+- [x] Understand onChanged mechanism
+- [x] Understand mustExecute mechanism
+- [x] Implement drill and cut operations
+- [x] Implement HELM feedback mechanism
 
 ### Jan. 10th: References
 
 - [x] For drill, you need two faces not parallel to each other, distance to these.
 - [x] Start an edge -> end an edge, move each points, attach to edges.
-- [x] Internal cuts, an initial point reference, automatically change it.
+- [ ] Internal cuts, an initial point reference, automatically change it.
 - [x] Cut-through: For the polycut, priority.
 - [x] Cool for this tool: List a bunch of tools.

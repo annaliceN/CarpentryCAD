@@ -941,6 +941,9 @@ void OCCOpenGL::actionApply()
 
 void OCCOpenGL::actionStop2dSketch()
 {
+	// Clear ref lines
+	mySketcher->GetCurrentCommand()->ClearRefLines();
+
 	myCurrentMode = CurAction3d_DynamicRotation;
 	auto& sData= mySketcher->GetData();
 	for (auto i = 1; i <= sData->Length(); ++i)

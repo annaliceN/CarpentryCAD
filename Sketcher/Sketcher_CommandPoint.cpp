@@ -56,7 +56,7 @@ Standard_Boolean Sketcher_CommandPoint::MouseInputEvent(const gp_Pnt2d& thePnt2d
 			{
 				auto curGeom2d_Edge = Handle(Geom2d_Edge)::DownCast(mySObject->GetGeometry());
 				ProjectOnCurve.Init(curPnt2d, curGeom2d_Edge, curGeom2d_Edge->StartParameter(), curGeom2d_Edge->EndParameter());
-				if (ProjectOnCurve.NbPoints() > 0)
+				if (ProjectOnCurve.NbPoints() > 0 && ProjectOnCurve.LowerDistance() > 0.1)
 				{
 					vecRefPnts.emplace_back(ProjectOnCurve.NearestPoint(), ProjectOnCurve.LowerDistance(), curGeom2d_Edge);
 				}
@@ -104,11 +104,13 @@ Standard_Boolean Sketcher_CommandPoint::MouseInputEvent(const gp_Pnt2d& thePnt2d
 		Handle(AIS_Line) myAIS_RefA = new AIS_Line(myGeom_Point, myGeom_RefPointA);
 		myAIS_RefA->Attributes()->SetLineAspect(myDashLineAspect);
 		myContext->Display(myAIS_RefA, Standard_True);
+		vecRefLines.push_back(myAIS_RefA);
 
 		Handle(Geom_CartesianPoint) myGeom_RefPointB = new Geom_CartesianPoint(ElCLib::To3d(curCoordinateSystem.Ax2(), vecRefPnts[findBestRef.second].pnt));
 		Handle(AIS_Line) myAIS_RefB = new AIS_Line(myGeom_Point, myGeom_RefPointB);
 		myAIS_RefB->Attributes()->SetLineAspect(myDashLineAspect);
 		myContext->Display(myAIS_RefB, Standard_True);
+		vecRefLines.push_back(myAIS_RefB);
 	}
 	break;
 	default:break;
