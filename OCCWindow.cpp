@@ -140,10 +140,18 @@ void OCCWindow::intialize_widget()
 
 	// CAD OPERATIONS
 	//QDockWidget *cad = new QDockWidget(tr("CAD Operations"), this);
-	MyObjectWidget *cad = myOCCOpenGL->getObjectWidget();
+	QDockWidget *cad = new QDockWidget(tr("CAD Operations"), this);
+	cad->setFeatures(QDockWidget::DockWidgetMovable | QDockWidget::DockWidgetClosable);
+	cad->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+	cad->setVisible(true);
 	cad->setMinimumHeight(240);
-	cad->setAllowedAreas(Qt::LeftDockWidgetArea);
 	addDockWidget(Qt::LeftDockWidgetArea, cad);
+	cad->setWidget(myOCCOpenGL->getObjectWidget());
+// 
+// 	MyObjectWidget *cad = myOCCOpenGL->getObjectWidget();
+// 	cad->setMinimumHeight(240);
+// 	cad->setAllowedAreas(Qt::LeftDockWidgetArea);
+// 	addDockWidget(Qt::LeftDockWidgetArea, cad);
 
 	QDockWidget *sr = new QDockWidget(tr("HELM Code"), this);
 	sr->setFeatures(QDockWidget::DockWidgetMovable | QDockWidget::DockWidgetClosable);
@@ -339,12 +347,12 @@ void OCCWindow::on_action_make_sphere()
 
 void OCCWindow::on_action_fuse()
 {
-	myOCCOpenGL->FuseSelected();
+	
 }
 
 void OCCWindow::on_action_cut()
 {
-	myOCCOpenGL->IntersectSelected();
+	
 }
 
 void OCCWindow::on_action_compile()

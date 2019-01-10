@@ -6,13 +6,19 @@
 #include <QKeyEvent>
 #include <QTreeWidgetItem>
 
-class MyObjectWidget : public QDockWidget
+class MyObjectWidget : public QTreeWidget
 {
 	Q_OBJECT
 
 public:
 	MyObjectWidget(QWidget *parent = 0);
 	~MyObjectWidget();
+
+	void startDrag(Qt::DropActions supportedActions);
+
+	void dragMoveEvent(QDragMoveEvent * event);
+
+	void dropEvent(QDropEvent * event);
 
 	void removeQTreeItemWidget(QTreeWidgetItem* item);
 
@@ -29,9 +35,8 @@ protected:
 
 signals:
 	void keyPressSignals(QKeyEvent *event);
+	void recomputeSignal();
 
-public:
-	Ui::ObjectWidget ui;
 };
 
 #endif

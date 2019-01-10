@@ -83,10 +83,8 @@ public:
 	QList<QAction*>* getDrawActions();
 
 	void setSelectionOptions(bool isPreselectionEnabled, bool isSelectionEnabled);
-
-	// Geometric operations
-	void FuseSelected();
-	void IntersectSelected();
+	
+	void RecomputeDisplay(Part::FeaturePrimitive * prim);
 
 signals:
     void selectionChanged(void);
@@ -117,6 +115,7 @@ public slots:
 	void onInputArcCenter2P();
 	void onInputBezierCurve();
 	void onTrimCurve();
+	void RecomputeTree();
 
 protected:
     // Paint events.

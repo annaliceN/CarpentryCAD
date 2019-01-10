@@ -1,24 +1,76 @@
 #include "objectwidget.h"
 
-MyObjectWidget::MyObjectWidget(QWidget *parent /* = 0 */)
+MyObjectWidget::MyObjectWidget(QWidget *parent /* = 0 */) :
+	QTreeWidget(parent)
 {
-	ui.setupUi(this);
-	ui.treeWidget->setHeaderLabel("CAD Operations");
+	setHeaderLabel("Tree");
+	setSelectionMode(QAbstractItemView::SingleSelection);
+	setDragEnabled(true);
+	setAcceptDrops(true);
+	setDropIndicatorShown(true);
 
-	connect(ui.treeWidget, SIGNAL(itemSelectionChanged()), parent, SLOT(objSelected()));
-	connect(ui.treeWidget, SIGNAL(itemClicked(QTreeWidgetItem*, int)), parent, SLOT(objChecked(QTreeWidgetItem*, int)));
-	/*connect(ui.treeWidget, SIGNAL(itemPressed(QTreeWidgetItem*, int)), this, SLOT(objSelected()));*/
+	setDragDropMode(QAbstractItemView::InternalMove);
+
+	connect(this, SIGNAL(itemPressed(QTreeWidgetItem*, int)), parent, SLOT(objSelected()));
 	connect(this, SIGNAL(keyPressSignals(QKeyEvent*)), parent, SLOT(keyPressSlot(QKeyEvent*)));
-
+	connect(this, SIGNAL(recomputeSignal()), parent, SLOT(RecomputeTree()));
 	setFocusPolicy(Qt::ClickFocus);
-	ui.treeWidget->setFocusPolicy(Qt::ClickFocus);
-	setFeatures(QDockWidget::DockWidgetFloatable | QDockWidget::DockWidgetMovable);
 }
 
 MyObjectWidget::~MyObjectWidget()
 {
 
 }
+
+
+void MyObjectWidget::startDrag(Qt::DropActions supportedActions)
+{
+	Q_UNUSED(supportedActions);
+	QTreeWidgetItem *item = currentItem();
+	if (item == NULL)
+		return;
+	if (item->text(0) == "-----------")
+	{
+		QTreeWidget::startDrag(supportedActions);
+	}
+}
+
+void MyObjectWidget::dragMoveEvent(QDragMoveEvent *event)
+{
+	QTreeWidgetItem *hHitTest = itemAt(event->pos());
+	if (hHitTest) event->ignore();
+	else
+	{
+		QTreeWidget::dragMoveEvent(event);
+	}
+	event->accept();
+	
+}
+
+void MyObjectWidget::dropEvent(QDropEvent *event)
+{
+	if (event->source() == this && (event->dropAction() == Qt::MoveAction ||
+		dragDropMode() == QAbstractItemView::InternalMove)) 
+	{
+		QTreeWidgetItem* itemOver = itemAt(event->pos());
+		QModelIndex indexOver = indexAt(event->pos());
+		QTreeWidgetItem* itemCur = currentItem();
+		QModelIndex curIndex = currentIndex();
+		
+		if (itemOver == nullptr || itemCur == nullptr) return;
+		takeTopLevelItem(curIndex.row());
+		insertTopLevelItem(indexOver.row(), itemCur);
+		
+		event->accept();
+		// Don't want QAbstractItemView to delete it because it was "moved" we already did it
+		event->setDropAction(Qt::CopyAction);
+
+		emit recomputeSignal();
+	}
+
+	QTreeView::dropEvent(event);
+}
+
 
 void MyObjectWidget::removeQTreeItemWidget(QTreeWidgetItem* item)
 {

@@ -69,9 +69,11 @@ Standard_Boolean Sketcher_CommandPoint::MouseInputEvent(const gp_Pnt2d& thePnt2d
 
 		for (int i = 0; i < vecRefPnts.size(); ++i)
 		{
+			if (vecRefPnts[i].edge->EndParameter() < 10.0) continue;
 			const auto& dirEdgeA = vecRefPnts[i].edge->Direction();
 			for (int j = i + 1; j < vecRefPnts.size(); ++j)
 			{
+				if (vecRefPnts[j].edge->EndParameter() < 10.0) continue;
 				const auto& dirEdgeB = vecRefPnts[j].edge->Direction();
 				if ( !dirEdgeA.IsParallel(dirEdgeB, Precision::Confusion()) )
 				{

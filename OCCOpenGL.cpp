@@ -76,6 +76,15 @@ OCCOpenGL::OCCOpenGL(QWidget* parent)
 {
 	propertyWidget = new MyPropertyWidget(this);
 	objectWidget = new MyObjectWidget(this);
+
+	// init filter
+	QIcon filterIcon;
+	filterIcon.addFile(":/Resources/filter.png");
+	QTreeWidgetItem* filter = new QTreeWidgetItem(objectWidget, QStringList("-----------"));
+	filter->setIcon(0, filterIcon);
+
+	objectWidget->addTopLevelItem(filter);
+
 	helm = new PHELM(this);
 
 	// Initialize cursors
@@ -976,9 +985,52 @@ void OCCOpenGL::actionDrillHoles(void)
 	activateCursor(SketcherDrill);
 }
 
+void OCCOpenGL::RecomputeTree()
+{
+	for (auto feat : featureWorkSpace)
+	{
+		myContext->Remove(feat->getGraphicShape(), Standard_True);
+	}
+
+	// update filter
+	bool foundFilter = false;
+	for (int i = 0; i < objectWidget->topLevelItemCount(); ++i)
+	{
+		QTreeWidgetItem* curItem = objectWidget->topLevelItem(i);
+		if (curItem->text(0) == "-----------")
+		{
+			foundFilter = true;
+		}
+
+		if (foundFilter)
+		{
+			curItem->setTextColor(0, QColor::fromRgb(100, 100, 100));
+		}
+		else
+		{
+			auto curBase = objMapping[curItem];
+			if (curBase->isDerivedFrom(Part::FeaturePrimitive::getClassTypeId()))
+			{
+				auto curPrim = dynamic_cast<Part::FeaturePrimitive*>(curBase);
+				if (curPrim != nullptr && curPrim->mustExecute())
+				{
+					curPrim->execute();
+					std::vector< App::Property*> vecProp;
+					curPrim->getPropertyList(vecProp);
+					for (auto & p : vecProp) curPrim->onChanged(p);
+				}
+				RecomputeDisplay(curPrim);
+			}
+			curItem->setTextColor(0, QColor::fromRgb(0, 0, 0));
+		}
+	}
+	slotRedraw();
+	this->update();
+}
+
 void OCCOpenGL::objSelected()
 {
-	QList<QTreeWidgetItem*> iterList = objectWidget->ui.treeWidget->selectedItems();
+	QList<QTreeWidgetItem*> iterList = objectWidget->selectedItems();
 	bool noRealPrimitiveSelected = true;
 	for (auto iter = iterList.begin(); iter != iterList.end(); ++iter)
 	{
@@ -997,6 +1049,7 @@ void OCCOpenGL::objSelected()
 		if (objOrPrimitive == NULL) continue;
 		propertyWidget->WritePropertiesToPropWidget(objOrPrimitive);
 	}
+
 	this->update();
 }
 
@@ -1320,44 +1373,43 @@ void OCCOpenGL::panByMiddleButton(const QPoint& thePoint)
 	myView->Pan(aCenterX - thePoint.x(), thePoint.y() - aCenterY);
 }
 
-void OCCOpenGL::FuseSelected()
+void OCCOpenGL::RecomputeDisplay(Part::FeaturePrimitive* prim)
 {
-	if (vecShapes.size() != 2) return;
-
-	if (aManipulator->HasActiveMode()) aManipulator->Detach();
-
-	if (vecShapes[0]->IsKind(STANDARD_TYPE(AIS_Shape)) && vecShapes[1]->IsKind(STANDARD_TYPE(AIS_Shape)))
+	// First, display!
+	if (prim->getTypeId() != Part::FeaturePolyline::getClassTypeId())
 	{
-		Handle(AIS_Shape) shapeA = Handle(AIS_Shape)::DownCast(vecShapes[0]);
-		Handle(AIS_Shape) shapeB = Handle(AIS_Shape)::DownCast(vecShapes[1]);
-
-		TopoDS_Shape aFusedShape = BRepAlgoAPI_Fuse(shapeA->Shape(), shapeB->Shape());
-		Handle(AIS_Shape) anAisCylinder = new AIS_Shape(aFusedShape);
-		std::cout << "fused done" << std::endl;
-		myContext->Remove(vecShapes[0], Standard_True);
-		myContext->Remove(vecShapes[1], Standard_True);
-		myContext->Display(anAisCylinder, Standard_True);
+		primMapping[prim->getGraphicShape()] = prim;
+		myContext->Display(prim->getGraphicShape(), Standard_True);
 	}
-}
 
-void OCCOpenGL::IntersectSelected()
-{
-	if (vecShapes.size() != 2) return;
-
-	if (aManipulator->HasActiveMode()) aManipulator->Detach();
-
-	if (vecShapes[0]->IsKind(STANDARD_TYPE(AIS_Shape)) && vecShapes[1]->IsKind(STANDARD_TYPE(AIS_Shape)))
+	// Second, disable previously displayed.
+	if (prim->getTypeId() == Part::FeatureDrill::getClassTypeId())
 	{
-		Handle(AIS_Shape) shapeA = Handle(AIS_Shape)::DownCast(vecShapes[0]);
-		Handle(AIS_Shape) shapeB = Handle(AIS_Shape)::DownCast(vecShapes[1]);
+		auto pDrill = dynamic_cast<Part::FeatureDrill*>(prim);
+		for (auto it = objMapping.begin(); it != objMapping.end(); ++it)
+		{
+			auto p = *it;
+			if (p.second == pDrill->BaseFeature.getValue())
+			{
+				auto tbCut = dynamic_cast<Part::FeaturePrimitive*>(p.second);
+				myContext->Remove(tbCut->getGraphicShape(), Standard_True);
 
-		TopoDS_Shape aFusedShape = BRepAlgoAPI_Cut(shapeA->Shape(), shapeB->Shape());
-		Handle(AIS_Shape) intersectedSahpe = new AIS_Shape(aFusedShape);
-		myContext->Remove(vecShapes[0], Standard_True);
-		myContext->Remove(vecShapes[1], Standard_True);
-		myContext->Display(intersectedSahpe, Standard_True);
-
-		helm->IntersectAwithB(shapeA, shapeB, intersectedSahpe);
+			}
+		}
+	}
+	else if (prim->getTypeId() == Part::FeaturePolyCut::getClassTypeId() ||
+		prim->getTypeId() == Part::FeaturePartBoolean::getClassTypeId())
+	{
+		auto pCut = dynamic_cast<Part::FeaturePolyCut*>(prim);
+		for (auto it = objMapping.begin(); it != objMapping.end(); ++it)
+		{
+			auto p = *it;
+			if (p.second == pCut->BaseFeature.getValue() || p.second == pCut->ToolFeature.getValue())
+			{
+				auto tbCut = dynamic_cast<Part::FeaturePrimitive*>(p.second);
+				myContext->Remove(tbCut->getGraphicShape(), Standard_True);
+			}
+		}
 	}
 }
 
@@ -1372,13 +1424,7 @@ void OCCOpenGL::createShape(Base::BaseClass* obj)
 	{
 		auto prim = dynamic_cast<Part::FeaturePrimitive*>(obj);
 		if (prim == nullptr) return;
-
-		if (prim->getTypeId() != Part::FeaturePolyline::getClassTypeId())
-		{
-			primMapping[prim->getGraphicShape()] = prim;
-			myContext->Display(prim->getGraphicShape(), Standard_True);
-		}
-
+		
 		QString primName;
 		QIcon primitiveIcon;
 
@@ -1420,24 +1466,7 @@ void OCCOpenGL::createShape(Base::BaseClass* obj)
 			primName = QString("Drill ") + helm->AssignCreatedShape(prim);
 			primitiveIcon.addFile(":/Resources/cube_crop.png");
 			primitiveItem = new QTreeWidgetItem(QStringList(primName));
-			auto pDrill = dynamic_cast<Part::FeatureDrill*>(prim);
-			for (auto it = objMapping.begin(); it != objMapping.end();)
-			{
-				auto p = *it;
- 				if (p.second == pDrill->BaseFeature.getValue())
- 				{
- 					auto tbCut = dynamic_cast<Part::FeaturePrimitive*>(p.second);
- 					myContext->Remove(tbCut->getGraphicShape(), Standard_True);
-// 					delete p.first;
-// 					objMapping.erase(p.first);
-// 					it = objMapping.begin();
- 				}
-// 				else
-				{
-					++it;
-				}
-			}
-
+			
 			// Add property to its child
 			std::vector<App::Property*> pList;
 			prim->getPropertyList(pList);
@@ -1455,24 +1484,7 @@ void OCCOpenGL::createShape(Base::BaseClass* obj)
 			primName = QString("Cut ") + helm->AssignCreatedShape(prim);
 			primitiveIcon.addFile(":/Resources/cube_crop.png");
 			primitiveItem = new QTreeWidgetItem(QStringList(primName));
-			auto pCut = dynamic_cast<Part::FeaturePolyCut*>(prim);
-			for (auto it = objMapping.begin(); it!=objMapping.end();)
-			{
-				auto p = *it;
-				if (p.second == pCut->BaseFeature.getValue() || p.second == pCut->ToolFeature.getValue())
-				{
- 					auto tbCut = dynamic_cast<Part::FeaturePrimitive*>(p.second);
- 					myContext->Remove(tbCut->getGraphicShape(), Standard_True);
-// 					delete p.first;
-// 					objMapping.erase(p.first);
-// 					it = objMapping.begin();
- 				}
-// 				else
-				{
-					++it;
-				}
-			}
-
+		
 			// Add property to its child
 			std::vector<App::Property*> pList;
 			prim->getPropertyList(pList);
@@ -1501,12 +1513,25 @@ void OCCOpenGL::createShape(Base::BaseClass* obj)
 			}
 		}
 
-		QTreeWidget *treeWidget = objectWidget->ui.treeWidget;
-		treeWidget->addTopLevelItem(primitiveItem);
+		QTreeWidget *treeWidget = objectWidget;
+		
+		if (treeWidget->topLevelItemCount() &&
+			treeWidget->topLevelItem(treeWidget->topLevelItemCount() - 1)->text(0) == QString(("-----------")))
+		{
+			treeWidget->insertTopLevelItem(treeWidget->topLevelItemCount() - 1, primitiveItem);
+		}
+		else
+		{
+			treeWidget->addTopLevelItem(primitiveItem);
+		}
+		
 		primitiveItem->setIcon(0, primitiveIcon);
 
 		featureWorkSpace.push_back(prim);
 		objMapping[primitiveItem] = prim;
+
+		// recompute display
+		RecomputeDisplay(prim);
 	}
 
 	// Refresh and generate helm code
@@ -1515,6 +1540,10 @@ void OCCOpenGL::createShape(Base::BaseClass* obj)
 
 void OCCOpenGL::slotRedraw()
 {
+	// TODO
+	//QTreeWidget *treeWidget = objectWidget->ui.treeWidget;
+
+
 	Redraw();
 	helm->CompileToHELM();
 }
