@@ -58,6 +58,7 @@
 #include <gp_Trsf.hxx>
 
 #include "FeatureBox.h"
+#include "ToolsConfiguration.h"
 
 template <typename T>
 std::vector<Handle(AIS_Shape)> convert_to_AIS_shape(std::unordered_set<T>& shapes)
@@ -95,6 +96,9 @@ OCCWindow::OCCWindow(QWidget *parent)
 	createToolBars();
 	
 	outputResult("Carpentry CAD initialized.");
+
+	ToolsConfiguration *dlg = new ToolsConfiguration(this);
+	dlg->show();
 }
 
 OCCWindow::~OCCWindow()
