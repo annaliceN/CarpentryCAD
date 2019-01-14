@@ -1,0 +1,5 @@
+<RCC>
+  <qresource prefix="Tools">
+    <file>Resources/bandsaw.jpg</file>
+  </qresource>
+</RCC>

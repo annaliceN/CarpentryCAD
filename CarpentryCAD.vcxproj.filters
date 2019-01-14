@@ -1,0 +1,570 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Form Files">
+      <UniqueIdentifier>{99349809-55BA-4b9d-BF79-8FDBB0286EB3}</UniqueIdentifier>
+      <Extensions>ui</Extensions>
+      <ParseFiles>false</ParseFiles>
+    </Filter>
+    <Filter Include="Form Files">
+      <UniqueIdentifier>{99349809-55BA-4b9d-BF79-8FDBB0286EB3}</UniqueIdentifier>
+      <Extensions>ui</Extensions>
+      <ParseFiles>false</ParseFiles>
+    </Filter>
+    <Filter Include="Generated Files">
+      <UniqueIdentifier>{71ED8ED8-ACB9-4CE9-BBE1-E00B30144E11}</UniqueIdentifier>
+      <Extensions>cpp;c;cxx;moc;h;def;odl;idl;res;</Extensions>
+    </Filter>
+    <Filter Include="Generated Files">
+      <UniqueIdentifier>{71ED8ED8-ACB9-4CE9-BBE1-E00B30144E11}</UniqueIdentifier>
+      <Extensions>cpp;c;cxx;moc;h;def;odl;idl;res;</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{D9D6E242-F8AF-46E4-B9FD-80ECBC20BA3E}</UniqueIdentifier>
+      <Extensions>qrc;*</Extensions>
+      <ParseFiles>false</ParseFiles>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{D9D6E242-F8AF-46E4-B9FD-80ECBC20BA3E}</UniqueIdentifier>
+      <Extensions>qrc;*</Extensions>
+      <ParseFiles>false</ParseFiles>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Sketcher">
+      <UniqueIdentifier>{a6967a76-783a-4797-bd34-a70165a9849a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Features">
+      <UniqueIdentifier>{4d74b764-9164-4c7b-94d5-f2c5a4a9b453}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Splitter">
+      <UniqueIdentifier>{649d8225-88d8-4f7f-94d1-326cc2d92cd3}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Sketcher\Geom2d_Edge.cpp">
+      <Filter>Sketcher</Filter>
+    </ClCompile>
+    <ClCompile Include="Sketcher\Sketcher.cpp">
+      <Filter>Sketcher</Filter>
+    </ClCompile>
+    <ClCompile Include="Sketcher\Sketcher_AnalyserSnap.cpp">
+      <Filter>Sketcher</Filter>
+    </ClCompile>
+    <ClCompile Include="Sketcher\Sketcher_Command.cpp">
+      <Filter>Sketcher</Filter>
+    </ClCompile>
+    <ClCompile Include="Sketcher\Sketcher_CommandArc3P.cpp">
+      <Filter>Sketcher</Filter>
+    </ClCompile>
+    <ClCompile Include="Sketcher\Sketcher_CommandArcCenter2P.cpp">
+      <Filter>Sketcher</Filter>
+    </ClCompile>
+    <ClCompile Include="Sketcher\Sketcher_CommandBezierCurve.cpp">
+      <Filter>Sketcher</Filter>
+    </ClCompile>
+    <ClCompile Include="Sketcher\Sketcher_CommandCircle2PTan.cpp">
+      <Filter>Sketcher</Filter>
+    </ClCompile>
+    <ClCompile Include="Sketcher\Sketcher_CommandCircle3P.cpp">
+      <Filter>Sketcher</Filter>
+    </ClCompile>
+    <ClCompile Include="Sketcher\Sketcher_CommandCircle3Tan.cpp">
+      <Filter>Sketcher</Filter>
+    </ClCompile>
+    <ClCompile Include="Sketcher\Sketcher_CommandCircleCenterRadius.cpp">
+      <Filter>Sketcher</Filter>
+    </ClCompile>
+    <ClCompile Include="Sketcher\Sketcher_CommandCircleP2Tan.cpp">
+      <Filter>Sketcher</Filter>
+    </ClCompile>
+    <ClCompile Include="Sketcher\Sketcher_CommandLine2P.cpp">
+      <Filter>Sketcher</Filter>
+    </ClCompile>
+    <ClCompile Include="Sketcher\Sketcher_CommandPoint.cpp">
+      <Filter>Sketcher</Filter>
+    </ClCompile>
+    <ClCompile Include="Sketcher\Sketcher_CommandTrim.cpp">
+      <Filter>Sketcher</Filter>
+    </ClCompile>
+    <ClCompile Include="Sketcher\Sketcher_GUI.cpp">
+      <Filter>Sketcher</Filter>
+    </ClCompile>
+    <ClCompile Include="Sketcher\Sketcher_Object.cpp">
+      <Filter>Sketcher</Filter>
+    </ClCompile>
+    <ClCompile Include="Sketcher\Sketcher_QtGUI.cpp">
+      <Filter>Sketcher</Filter>
+    </ClCompile>
+    <ClCompile Include="Sketcher\Sketcher_Snap.cpp">
+      <Filter>Sketcher</Filter>
+    </ClCompile>
+    <ClCompile Include="Sketcher\Sketcher_SnapCenter.cpp">
+      <Filter>Sketcher</Filter>
+    </ClCompile>
+    <ClCompile Include="Sketcher\Sketcher_SnapEnd.cpp">
+      <Filter>Sketcher</Filter>
+    </ClCompile>
+    <ClCompile Include="Sketcher\Sketcher_SnapIntersection.cpp">
+      <Filter>Sketcher</Filter>
+    </ClCompile>
+    <ClCompile Include="Sketcher\Sketcher_SnapLine.cpp">
+      <Filter>Sketcher</Filter>
+    </ClCompile>
+    <ClCompile Include="Sketcher\Sketcher_SnapLineParallel.cpp">
+      <Filter>Sketcher</Filter>
+    </ClCompile>
+    <ClCompile Include="Sketcher\Sketcher_SnapLinePerpendicular.cpp">
+      <Filter>Sketcher</Filter>
+    </ClCompile>
+    <ClCompile Include="Sketcher\Sketcher_SnapMiddle.cpp">
+      <Filter>Sketcher</Filter>
+    </ClCompile>
+    <ClCompile Include="Sketcher\Sketcher_SnapNearest.cpp">
+      <Filter>Sketcher</Filter>
+    </ClCompile>
+    <ClCompile Include="Sketcher\Sketcher_SnapTangent.cpp">
+      <Filter>Sketcher</Filter>
+    </ClCompile>
+    <ClCompile Include="Sketcher\Sketcher_SnapExisitingEdge.cpp">
+      <Filter>Sketcher</Filter>
+    </ClCompile>
+    <ClCompile Include="ToolsConfiguration.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Sketcher\Geom2d_Arc.cpp">
+      <Filter>Sketcher</Filter>
+    </ClCompile>
+    <ClCompile Include="Features\FeatureDrill.cpp">
+      <Filter>Features</Filter>
+    </ClCompile>
+    <ClCompile Include="Features\FeatureBezierCurve.cpp">
+      <Filter>Features</Filter>
+    </ClCompile>
+    <ClCompile Include="Features\FeaturePartBoolean.cpp">
+      <Filter>Features</Filter>
+    </ClCompile>
+    <ClCompile Include="Features\FeaturePolycut.cpp">
+      <Filter>Features</Filter>
+    </ClCompile>
+    <ClCompile Include="Features\FeaturePolyline.cpp">
+      <Filter>Features</Filter>
+    </ClCompile>
+    <ClCompile Include="Features\FeaturePartPolygon.cpp">
+      <Filter>Features</Filter>
+    </ClCompile>
+    <ClCompile Include="Features\PropertyStandard.cpp">
+      <Filter>Features</Filter>
+    </ClCompile>
+    <ClCompile Include="Features\FeaturePartCut.cpp">
+      <Filter>Features</Filter>
+    </ClCompile>
+    <ClCompile Include="Features\FeaturePrimitive.cpp">
+      <Filter>Features</Filter>
+    </ClCompile>
+    <ClCompile Include="Features\FeatureBox.cpp">
+      <Filter>Features</Filter>
+    </ClCompile>
+    <ClCompile Include="Features\PropertyFeature.cpp">
+      <Filter>Features</Filter>
+    </ClCompile>
+    <ClCompile Include="Features\FileInfo.cpp">
+      <Filter>Features</Filter>
+    </ClCompile>
+    <ClCompile Include="Features\Rotation.cpp">
+      <Filter>Features</Filter>
+    </ClCompile>
+    <ClCompile Include="Features\Persistence.cpp">
+      <Filter>Features</Filter>
+    </ClCompile>
+    <ClCompile Include="Features\PropertyUnits.cpp">
+      <Filter>Features</Filter>
+    </ClCompile>
+    <ClCompile Include="Features\PropertyTopoShape.cpp">
+      <Filter>Features</Filter>
+    </ClCompile>
+    <ClCompile Include="Features\BaseClass.cpp">
+      <Filter>Features</Filter>
+    </ClCompile>
+    <ClCompile Include="Features\PropertyContainer.cpp">
+      <Filter>Features</Filter>
+    </ClCompile>
+    <ClCompile Include="Features\Property.cpp">
+      <Filter>Features</Filter>
+    </ClCompile>
+    <ClCompile Include="Features\TopoShape.cpp">
+      <Filter>Features</Filter>
+    </ClCompile>
+    <ClCompile Include="Features\Exception.cpp">
+      <Filter>Features</Filter>
+    </ClCompile>
+    <ClCompile Include="Features\ComplexGeoData.cpp">
+      <Filter>Features</Filter>
+    </ClCompile>
+    <ClCompile Include="Features\Handle.cpp">
+      <Filter>Features</Filter>
+    </ClCompile>
+    <ClCompile Include="Features\modelRefine.cpp">
+      <Filter>Features</Filter>
+    </ClCompile>
+    <ClCompile Include="Features\FaceMakerCheese.cpp">
+      <Filter>Features</Filter>
+    </ClCompile>
+    <ClCompile Include="Features\FaceMaker.cpp">
+      <Filter>Features</Filter>
+    </ClCompile>
+    <ClCompile Include="Features\FaceMakerBullseye.cpp">
+      <Filter>Features</Filter>
+    </ClCompile>
+    <ClCompile Include="Features\Tools.cpp">
+      <Filter>Features</Filter>
+    </ClCompile>
+    <ClCompile Include="Features\CrossSection.cpp">
+      <Filter>Features</Filter>
+    </ClCompile>
+    <ClCompile Include="Features\TimeInfo.cpp">
+      <Filter>Features</Filter>
+    </ClCompile>
+    <ClCompile Include="Features\Swap.cpp">
+      <Filter>Features</Filter>
+    </ClCompile>
+    <ClCompile Include="Features\Type.cpp">
+      <Filter>Features</Filter>
+    </ClCompile>
+    <ClCompile Include="Features\Tools2D.cpp">
+      <Filter>Features</Filter>
+    </ClCompile>
+    <ClCompile Include="Features\BoundBox.cpp">
+      <Filter>Features</Filter>
+    </ClCompile>
+    <ClCompile Include="Features\Placement.cpp">
+      <Filter>Features</Filter>
+    </ClCompile>
+    <ClCompile Include="Features\Vector3D.cpp">
+      <Filter>Features</Filter>
+    </ClCompile>
+    <ClCompile Include="Features\Matrix4D.cpp">
+      <Filter>Features</Filter>
+    </ClCompile>
+    <ClCompile Include="CodeEditor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Highlighter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ObjectWidget.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="OCCDomainLang.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="OCCOpenGL.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="OCCWindow.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PHELM.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PropertyWidget.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Splitter\GEOMAlgo_Splitter.cxx">
+      <Filter>Splitter</Filter>
+    </ClCompile>
+    <ClCompile Include="Splitter\BOPTools.cxx">
+      <Filter>Splitter</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <QtMoc Include="OCCWindow.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="OCCOpenGL.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="PHELM.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="OCCDomainLang.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="Highlighter.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="CodeEditor.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="PropertyWidget.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="ObjectWidget.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="ToolsConfiguration.h">
+      <Filter>Generated Files</Filter>
+    </QtMoc>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="debug\moc_predefs.h.cbt">
+      <Filter>Generated Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="release\moc_predefs.h.cbt">
+      <Filter>Generated Files</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <QtUic Include="PropertyWidget.ui">
+      <Filter>Form Files</Filter>
+    </QtUic>
+    <QtUic Include="ObjectWidget.ui">
+      <Filter>Form Files</Filter>
+    </QtUic>
+    <QtUic Include="MainWindow.ui">
+      <Filter>Form Files</Filter>
+    </QtUic>
+    <QtUic Include="ToolsConfiguration.ui">
+      <Filter>Form Files</Filter>
+    </QtUic>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\FitAll.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Resources\Home.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Resources\Pan.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Resources\Rotate.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Resources\Zoom.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Resources\box.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Resources\chamfer.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Resources\common.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Resources\cone.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Resources\cut.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Resources\cylinder.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Resources\extrude.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Resources\fillet.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Resources\fuse.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Resources\helix.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Resources\lamp.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Resources\loft.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <QtRcc Include="occqt.qrc">
+      <Filter>Resource Files</Filter>
+    </QtRcc>
+    <None Include="Resources\revolve.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Resources\sphere.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Resources\torus.png">
+      <Filter>Resource Files</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="procedures.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GEOMAlgo_Splitter.hxx">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="BOPTools.hxx">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MaterialLibrary.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PrimitiveLibrary.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Vector3D.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TopoShape.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FileInfo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TimeInfo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ComplexGeoData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Exception.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CrossSection.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Type.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Swap.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="BaseClass.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Tools.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Persistence.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Handle.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FaceMaker.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FaceMakerBullseye.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FaceMakerCheese.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="modelRefine.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Property.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PropertyContainer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FeaturePartPolygon.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Matrix4D.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Tools2D.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Rotation.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Placement.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FeaturePrimitive.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FeatureBox.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="BoundBox.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FeaturePartCut.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PropertyStandard.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PropertyTopoShape.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FeaturePartBoolean.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PropertyFeature.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PropertyUnits.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FeatureBezierCurve.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FeatureDrill.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FeaturePolycut.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FeaturePolyline.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="Resources\cube_crop.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Resources\cylinder_crop.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Resources\sphere_crop.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Resources\viewBack.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Resources\viewBottom.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Resources\viewFront.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Resources\viewLeft.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Resources\viewRight.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Resources\viewTop.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+  </ItemGroup>
+</Project>
