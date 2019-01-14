@@ -301,12 +301,6 @@
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
-    <QtUic Include="ObjectWidget.ui" />
-    <QtUic Include="MainWindow.ui" />
-    <QtUic Include="PropertyWidget.ui" />
-    <QtUic Include="ToolsConfiguration.ui" />
-  </ItemGroup>
-  <ItemGroup>
     <None Include="Resources\FitAll.png" />
     <None Include="Resources\Home.png" />
     <None Include="Resources\Pan.png" />
@@ -324,7 +318,7 @@
     <None Include="Resources\helix.png" />
     <None Include="Resources\lamp.png" />
     <None Include="Resources\loft.png" />
-    <QtRcc Include="CarpentryCAD.qrc">
+    <QtRcc Include="Gui\CarpentryCAD.qrc">
     </QtRcc>
     <None Include="Resources\revolve.png" />
     <None Include="Resources\sphere.png" />
@@ -358,6 +352,12 @@
     <QtMoc Include="Src\OCCOpenGL.h" />
     <QtMoc Include="Src\OCCDomainLang.h" />
     <QtMoc Include="Src\ObjectWidget.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <QtUic Include="Gui\MainWindow.ui" />
+    <QtUic Include="Gui\ObjectWidget.ui" />
+    <QtUic Include="Gui\PropertyWidget.ui" />
+    <QtUic Include="Gui\ToolsConfiguration.ui" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">
