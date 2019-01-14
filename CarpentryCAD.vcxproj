@@ -70,7 +70,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>.\GeneratedFiles\$(ConfigurationName);.\GeneratedFiles;.;Features;Sketcher;Splitter;..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include;..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtOpenGL;..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtWidgets;..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtGui;..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtANGLE;..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtCore;release;..\OpenCASCADE-7.3.0-vc14-64\opencascade-7.3.0\inc;..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\mkspecs\win32-msvc;D:\Library\libigl\external\eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\GeneratedFiles\$(ConfigurationName);.\GeneratedFiles;.;Src;Features;Sketcher;Splitter;..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include;..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtOpenGL;..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtWidgets;..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtGui;..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtANGLE;..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtCore;release;..\OpenCASCADE-7.3.0-vc14-64\opencascade-7.3.0\inc;..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\mkspecs\win32-msvc;D:\Library\libigl\external\eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>-Zc:rvalueCast -Zc:inline -Zc:strictStrings -Zc:throwingNew -w34100 -w34189 -w44996 -w44456 -w44457 -w44458 %(AdditionalOptions)</AdditionalOptions>
       <AssemblerListingLocation>release\</AssemblerListingLocation>
       <BrowseInformation>false</BrowseInformation>
@@ -112,13 +112,13 @@
     <QtMoc>
       <QTDIR>E:\QT\QT5.11.2\5.11.2\MSVC2015_64</QTDIR>
       <OutputFile>.\GeneratedFiles\$(ConfigurationName)\moc_%(Filename).cpp</OutputFile>
-      <Define>_WINDOWS;UNICODE;_UNICODE;WIN32;WIN64;WNT;QT_NO_DEBUG;QT_OPENGL_LIB;QT_WIDGETS_LIB;QT_GUI_LIB;QT_CORE_LIB;NDEBUG;FC_OS_WIN32;CXX_NO_IOSTREAMS;%(PreprocessorDefinitions)</Define>
+      <Define>_WINDOWS;UNICODE;_UNICODE;WIN32;WIN64;WNT;QT_NO_DEBUG;QT_OPENGL_LIB;QT_WIDGETS_LIB;QT_GUI_LIB;QT_CORE_LIB;NDEBUG;FC_OS_WIN32;CXX_NO_IOSTREAMS</Define>
       <CompilerFlavor>msvc</CompilerFlavor>
       <Include>./$(Configuration)/moc_predefs.h</Include>
       <ExecutionDescription>Moc'ing %(Identity)...</ExecutionDescription>
       <InputFile>%(FullPath)</InputFile>
       <DynamicSource>output</DynamicSource>
-      <IncludePath>.\GeneratedFiles\$(ConfigurationName);.\GeneratedFiles;.;Features;Sketcher;Splitter;..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include;..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtOpenGL;..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtWidgets;..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtGui;..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtANGLE;..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtCore;release;..\OpenCASCADE-7.3.0-vc14-64\opencascade-7.3.0\inc;..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\mkspecs\win32-msvc;D:\Library\libigl\external\eigen;%(AdditionalIncludeDirectories)</IncludePath>
+      <IncludePath>.\GeneratedFiles\$(ConfigurationName)\.;.\GeneratedFiles;.;.\Src;.\Features;.\Sketcher;.\Splitter;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtOpenGL;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtWidgets;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtGui;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtANGLE;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtCore;.\release;.\..\OpenCASCADE-7.3.0-vc14-64\opencascade-7.3.0\inc;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\mkspecs\win32-msvc;D:\Library\libigl\external\eigen</IncludePath>
     </QtMoc>
     <QtRcc>
       <InitFuncName>CarpentryCAD</InitFuncName>
@@ -186,13 +186,13 @@
     <QtMoc>
       <QTDIR>E:\QT\QT5.11.2\5.11.2\MSVC2015_64</QTDIR>
       <OutputFile>.\GeneratedFiles\$(ConfigurationName)\moc_%(Filename).cpp</OutputFile>
-      <Define>_WINDOWS;UNICODE;_UNICODE;WIN32;WIN64;WNT;QT_OPENGL_LIB;QT_WIDGETS_LIB;QT_GUI_LIB;QT_CORE_LIB;FC_OS_WIN32;%(PreprocessorDefinitions)</Define>
+      <Define>_WINDOWS;UNICODE;_UNICODE;WIN32;WIN64;WNT;QT_OPENGL_LIB;QT_WIDGETS_LIB;QT_GUI_LIB;QT_CORE_LIB;FC_OS_WIN32</Define>
       <CompilerFlavor>msvc</CompilerFlavor>
       <Include>./$(Configuration)/moc_predefs.h</Include>
       <ExecutionDescription>Moc'ing %(Identity)...</ExecutionDescription>
       <InputFile>%(FullPath)</InputFile>
       <DynamicSource>output</DynamicSource>
-      <IncludePath>.\GeneratedFiles\$(ConfigurationName);.\GeneratedFiles;.;/inc;..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include;..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtOpenGL;..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtWidgets;..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtGui;..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtANGLE;..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtCore;release;E:\uw-intern\OpenCASCADE-7.3.0-vc14-64\opencascade-7.3.0\inc;..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\mkspecs\win32-msvc;D:\Library\libigl\external\eigen;E:\uw-intern\CarpentryCAD\Sketcher;%(AdditionalIncludeDirectories)</IncludePath>
+      <IncludePath>.\GeneratedFiles\$(ConfigurationName)\.;.\GeneratedFiles;.;\inc;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtOpenGL;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtWidgets;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtGui;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtANGLE;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtCore;.\release;E:\uw-intern\OpenCASCADE-7.3.0-vc14-64\opencascade-7.3.0\inc;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\mkspecs\win32-msvc;D:\Library\libigl\external\eigen;E:\uw-intern\CarpentryCAD\Sketcher</IncludePath>
     </QtMoc>
     <QtUic>
       <QTDIR>E:\QT\QT5.11.2\5.11.2\MSVC2015_64</QTDIR>
@@ -202,7 +202,6 @@
     </QtUic>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="CodeEditor.cpp" />
     <ClCompile Include="Features\BaseClass.cpp" />
     <ClCompile Include="Features\BoundBox.cpp" />
     <ClCompile Include="Features\ComplexGeoData.cpp" />
@@ -240,14 +239,6 @@
     <ClCompile Include="Features\TopoShape.cpp" />
     <ClCompile Include="Features\Type.cpp" />
     <ClCompile Include="Features\Vector3D.cpp" />
-    <ClCompile Include="Highlighter.cpp" />
-    <ClCompile Include="Main.cpp" />
-    <ClCompile Include="ObjectWidget.cpp" />
-    <ClCompile Include="OCCDomainLang.cpp" />
-    <ClCompile Include="OCCOpenGL.cpp" />
-    <ClCompile Include="OCCWindow.cpp" />
-    <ClCompile Include="PHELM.cpp" />
-    <ClCompile Include="PropertyWidget.cpp" />
     <ClCompile Include="Sketcher\Geom2d_Arc.cpp" />
     <ClCompile Include="Sketcher\Geom2d_Edge.cpp" />
     <ClCompile Include="Sketcher\Sketcher.cpp" />
@@ -280,66 +271,18 @@
     <ClCompile Include="Sketcher\Sketcher_SnapTangent.cpp" />
     <ClCompile Include="Splitter\BOPTools.cxx" />
     <ClCompile Include="Splitter\GEOMAlgo_Splitter.cxx" />
-    <ClCompile Include="ToolsConfiguration.cpp" />
+    <ClCompile Include="Src\CodeEditor.cpp" />
+    <ClCompile Include="Src\Highlighter.cpp" />
+    <ClCompile Include="Src\Main.cpp" />
+    <ClCompile Include="Src\ObjectWidget.cpp" />
+    <ClCompile Include="Src\OCCDomainLang.cpp" />
+    <ClCompile Include="Src\OCCOpenGL.cpp" />
+    <ClCompile Include="Src\OCCWindow.cpp" />
+    <ClCompile Include="Src\PHELM.cpp" />
+    <ClCompile Include="Src\PropertyWidget.cpp" />
+    <ClCompile Include="Src\ToolsConfiguration.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <QtMoc Include="OCCWindow.h">
-      <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.\GeneratedFiles\$(ConfigurationName)\.;.\GeneratedFiles;.;\inc;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtOpenGL;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtWidgets;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtGui;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtANGLE;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtCore;.\debug;\include;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\mkspecs\win32-msvc</IncludePath>
-      <Define Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">_WINDOWS;UNICODE;_UNICODE;WIN32;WIN64;WNT;QT_OPENGL_LIB;QT_WIDGETS_LIB;QT_GUI_LIB;QT_CORE_LIB</Define>
-      <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.\GeneratedFiles\$(ConfigurationName)\.;.\GeneratedFiles;.;\inc;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtOpenGL;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtWidgets;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtGui;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtANGLE;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtCore;.\release;E:\uw-intern\OpenCASCADE-7.3.0-vc14-64\opencascade-7.3.0\inc;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\mkspecs\win32-msvc</IncludePath>
-      <Define Condition="'$(Configuration)|$(Platform)'=='Release|x64'">_WINDOWS;UNICODE;_UNICODE;WIN32;WIN64;WNT;QT_NO_DEBUG;QT_OPENGL_LIB;QT_WIDGETS_LIB;QT_GUI_LIB;QT_CORE_LIB;NDEBUG</Define>
-    </QtMoc>
-    <QtMoc Include="OCCOpenGL.h">
-      <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.\GeneratedFiles\$(ConfigurationName)\.;.\GeneratedFiles;.;\inc;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtOpenGL;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtWidgets;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtGui;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtANGLE;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtCore;.\debug;\include;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\mkspecs\win32-msvc</IncludePath>
-      <Define Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">_WINDOWS;UNICODE;_UNICODE;WIN32;WIN64;WNT;QT_OPENGL_LIB;QT_WIDGETS_LIB;QT_GUI_LIB;QT_CORE_LIB</Define>
-      <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.\GeneratedFiles\$(ConfigurationName)\.;.\GeneratedFiles;.;\inc;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtOpenGL;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtWidgets;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtGui;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtANGLE;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtCore;.\release;E:\uw-intern\OpenCASCADE-7.3.0-vc14-64\opencascade-7.3.0\inc;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\mkspecs\win32-msvc</IncludePath>
-      <Define Condition="'$(Configuration)|$(Platform)'=='Release|x64'">_WINDOWS;UNICODE;_UNICODE;WIN32;WIN64;WNT;QT_NO_DEBUG;QT_OPENGL_LIB;QT_WIDGETS_LIB;QT_GUI_LIB;QT_CORE_LIB;NDEBUG</Define>
-    </QtMoc>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="BaseClass.h" />
-    <ClInclude Include="BoundBox.h" />
-    <ClInclude Include="ComplexGeoData.h" />
-    <ClInclude Include="CrossSection.h" />
-    <ClInclude Include="Exception.h" />
-    <ClInclude Include="FaceMaker.h" />
-    <ClInclude Include="FaceMakerBullseye.h" />
-    <ClInclude Include="FaceMakerCheese.h" />
-    <ClInclude Include="FeatureBezierCurve.h" />
-    <ClInclude Include="FeatureBox.h" />
-    <ClInclude Include="FeatureDrill.h" />
-    <ClInclude Include="FeaturePartBoolean.h" />
-    <ClInclude Include="FeaturePartCut.h" />
-    <ClInclude Include="FeaturePartPolygon.h" />
-    <ClInclude Include="FeaturePolycut.h" />
-    <ClInclude Include="FeaturePolyline.h" />
-    <ClInclude Include="FeaturePrimitive.h" />
-    <ClInclude Include="FileInfo.h" />
-    <ClInclude Include="Handle.h" />
-    <ClInclude Include="Matrix4D.h" />
-    <ClInclude Include="modelRefine.h" />
-    <ClInclude Include="Persistence.h" />
-    <ClInclude Include="Placement.h" />
-    <ClInclude Include="Property.h" />
-    <ClInclude Include="PropertyContainer.h" />
-    <ClInclude Include="PropertyFeature.h" />
-    <ClInclude Include="PropertyStandard.h" />
-    <ClInclude Include="PropertyTopoShape.h" />
-    <ClInclude Include="PropertyUnits.h" />
-    <ClInclude Include="Rotation.h" />
-    <ClInclude Include="Swap.h" />
-    <ClInclude Include="TimeInfo.h" />
-    <ClInclude Include="Tools.h" />
-    <ClInclude Include="Tools2D.h" />
-    <QtMoc Include="ToolsConfiguration.h">
-      <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.\GeneratedFiles\$(ConfigurationName)\.;.\GeneratedFiles;.;\inc;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtOpenGL;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtWidgets;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtGui;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtANGLE;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtCore;.\release;E:\uw-intern\OpenCASCADE-7.3.0-vc14-64\opencascade-7.3.0\inc;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\mkspecs\win32-msvc;D:\Library\libigl\external\eigen;E:\uw-intern\CarpentryCAD\Sketcher</IncludePath>
-      <Define Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">_WINDOWS;UNICODE;_UNICODE;WIN32;WIN64;WNT;QT_OPENGL_LIB;QT_WIDGETS_LIB;QT_GUI_LIB;QT_CORE_LIB;FC_OS_WIN32</Define>
-      <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.\GeneratedFiles\$(ConfigurationName)\.;.\GeneratedFiles;.;\inc;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtOpenGL;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtWidgets;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtGui;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtANGLE;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtCore;.\release;E:\uw-intern\OpenCASCADE-7.3.0-vc14-64\opencascade-7.3.0\inc;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\mkspecs\win32-msvc;D:\Library\libigl\external\eigen;E:\uw-intern\CarpentryCAD\Sketcher</IncludePath>
-      <Define Condition="'$(Configuration)|$(Platform)'=='Release|x64'">_WINDOWS;UNICODE;_UNICODE;WIN32;WIN64;WNT;QT_NO_DEBUG;QT_OPENGL_LIB;QT_WIDGETS_LIB;QT_GUI_LIB;QT_CORE_LIB;NDEBUG;FC_OS_WIN32;CXX_NO_IOSTREAMS</Define>
-    </QtMoc>
-    <ClInclude Include="TopoShape.h" />
-    <ClInclude Include="Type.h" />
-    <ClInclude Include="Vector3D.h" />
     <CustomBuild Include="debug\moc_predefs.h.cbt">
       <FileType>Document</FileType>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
@@ -356,47 +299,6 @@
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">release\moc_predefs.h;%(Outputs)</Outputs>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </CustomBuild>
-    <QtMoc Include="CodeEditor.h">
-      <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.\GeneratedFiles\$(ConfigurationName)\.;.\GeneratedFiles;.;\inc;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtOpenGL;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtWidgets;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtGui;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtANGLE;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtCore;.\debug;\include;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\mkspecs\win32-msvc</IncludePath>
-      <Define Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">_WINDOWS;UNICODE;_UNICODE;WIN32;WIN64;WNT;QT_OPENGL_LIB;QT_WIDGETS_LIB;QT_GUI_LIB;QT_CORE_LIB</Define>
-      <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.\GeneratedFiles\$(ConfigurationName)\.;.\GeneratedFiles;.;\inc;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtOpenGL;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtWidgets;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtGui;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtANGLE;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtCore;.\release;E:\uw-intern\OpenCASCADE-7.3.0-vc14-64\opencascade-7.3.0\inc;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\mkspecs\win32-msvc</IncludePath>
-      <Define Condition="'$(Configuration)|$(Platform)'=='Release|x64'">_WINDOWS;UNICODE;_UNICODE;WIN32;WIN64;WNT;QT_NO_DEBUG;QT_OPENGL_LIB;QT_WIDGETS_LIB;QT_GUI_LIB;QT_CORE_LIB;NDEBUG</Define>
-    </QtMoc>
-    <ClInclude Include="BOPTools.hxx" />
-    <ClInclude Include="GEOMAlgo_Splitter.hxx" />
-    <ClInclude Include="MaterialLibrary.h" />
-    <QtMoc Include="OCCDomainLang.h">
-      <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.\GeneratedFiles\$(ConfigurationName)\.;.\GeneratedFiles;.;\inc;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtOpenGL;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtWidgets;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtGui;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtANGLE;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtCore;.\debug;\include;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\mkspecs\win32-msvc</IncludePath>
-      <Define Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">_WINDOWS;UNICODE;_UNICODE;WIN32;WIN64;WNT;QT_OPENGL_LIB;QT_WIDGETS_LIB;QT_GUI_LIB;QT_CORE_LIB</Define>
-      <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.\GeneratedFiles\$(ConfigurationName)\.;.\GeneratedFiles;.;\inc;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtOpenGL;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtWidgets;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtGui;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtANGLE;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtCore;.\release;E:\uw-intern\OpenCASCADE-7.3.0-vc14-64\opencascade-7.3.0\inc;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\mkspecs\win32-msvc</IncludePath>
-      <Define Condition="'$(Configuration)|$(Platform)'=='Release|x64'">_WINDOWS;UNICODE;_UNICODE;WIN32;WIN64;WNT;QT_NO_DEBUG;QT_OPENGL_LIB;QT_WIDGETS_LIB;QT_GUI_LIB;QT_CORE_LIB;NDEBUG</Define>
-    </QtMoc>
-    <QtMoc Include="Highlighter.h">
-      <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.\GeneratedFiles\$(ConfigurationName)\.;.\GeneratedFiles;.;\inc;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtOpenGL;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtWidgets;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtGui;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtANGLE;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtCore;.\debug;\include;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\mkspecs\win32-msvc</IncludePath>
-      <Define Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">_WINDOWS;UNICODE;_UNICODE;WIN32;WIN64;WNT;QT_OPENGL_LIB;QT_WIDGETS_LIB;QT_GUI_LIB;QT_CORE_LIB</Define>
-      <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.\GeneratedFiles\$(ConfigurationName)\.;.\GeneratedFiles;.;\inc;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtOpenGL;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtWidgets;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtGui;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtANGLE;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtCore;.\release;E:\uw-intern\OpenCASCADE-7.3.0-vc14-64\opencascade-7.3.0\inc;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\mkspecs\win32-msvc</IncludePath>
-      <Define Condition="'$(Configuration)|$(Platform)'=='Release|x64'">_WINDOWS;UNICODE;_UNICODE;WIN32;WIN64;WNT;QT_NO_DEBUG;QT_OPENGL_LIB;QT_WIDGETS_LIB;QT_GUI_LIB;QT_CORE_LIB;NDEBUG</Define>
-    </QtMoc>
-    <QtMoc Include="PHELM.h">
-      <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.\GeneratedFiles\$(ConfigurationName)\.;.\GeneratedFiles;.;\inc;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtOpenGL;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtWidgets;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtGui;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtANGLE;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtCore;.\debug;\include;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\mkspecs\win32-msvc</IncludePath>
-      <Define Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">_WINDOWS;UNICODE;_UNICODE;WIN32;WIN64;WNT;QT_OPENGL_LIB;QT_WIDGETS_LIB;QT_GUI_LIB;QT_CORE_LIB</Define>
-      <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.\GeneratedFiles\$(ConfigurationName)\.;.\GeneratedFiles;.;\inc;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtOpenGL;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtWidgets;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtGui;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtANGLE;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtCore;.\release;E:\uw-intern\OpenCASCADE-7.3.0-vc14-64\opencascade-7.3.0\inc;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\mkspecs\win32-msvc</IncludePath>
-      <Define Condition="'$(Configuration)|$(Platform)'=='Release|x64'">_WINDOWS;UNICODE;_UNICODE;WIN32;WIN64;WNT;QT_NO_DEBUG;QT_OPENGL_LIB;QT_WIDGETS_LIB;QT_GUI_LIB;QT_CORE_LIB;NDEBUG</Define>
-    </QtMoc>
-    <QtMoc Include="ObjectWidget.h">
-      <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.\GeneratedFiles\$(ConfigurationName)\.;.\GeneratedFiles;.;\inc;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtOpenGL;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtWidgets;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtGui;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtANGLE;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtCore;.\debug;\include;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\mkspecs\win32-msvc</IncludePath>
-      <Define Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">_WINDOWS;UNICODE;_UNICODE;WIN32;WIN64;WNT;QT_OPENGL_LIB;QT_WIDGETS_LIB;QT_GUI_LIB;QT_CORE_LIB</Define>
-      <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.\GeneratedFiles\$(ConfigurationName)\.;.\GeneratedFiles;.;\inc;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtOpenGL;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtWidgets;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtGui;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtANGLE;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtCore;.\release;E:\uw-intern\OpenCASCADE-7.3.0-vc14-64\opencascade-7.3.0\inc;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\mkspecs\win32-msvc;D:\Library\libigl\external\eigen</IncludePath>
-      <Define Condition="'$(Configuration)|$(Platform)'=='Release|x64'">_WINDOWS;UNICODE;_UNICODE;WIN32;WIN64;WNT;QT_NO_DEBUG;QT_OPENGL_LIB;QT_WIDGETS_LIB;QT_GUI_LIB;QT_CORE_LIB;NDEBUG</Define>
-    </QtMoc>
-    <ClInclude Include="PrimitiveLibrary.h" />
-    <ClInclude Include="procedures.h" />
-    <QtMoc Include="PropertyWidget.h">
-      <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.\GeneratedFiles\$(ConfigurationName)\.;.\GeneratedFiles;.;\inc;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtOpenGL;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtWidgets;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtGui;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtANGLE;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtCore;.\debug;\include;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\mkspecs\win32-msvc</IncludePath>
-      <Define Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">_WINDOWS;UNICODE;_UNICODE;WIN32;WIN64;WNT;QT_OPENGL_LIB;QT_WIDGETS_LIB;QT_GUI_LIB;QT_CORE_LIB</Define>
-      <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.\GeneratedFiles\$(ConfigurationName)\.;.\GeneratedFiles;.;\inc;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtOpenGL;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtWidgets;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtGui;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtANGLE;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\include\QtCore;.\release;E:\uw-intern\OpenCASCADE-7.3.0-vc14-64\opencascade-7.3.0\inc;.\..\..\QT\QT5.11.2\5.11.2\MSVC2015_64\mkspecs\win32-msvc</IncludePath>
-      <Define Condition="'$(Configuration)|$(Platform)'=='Release|x64'">_WINDOWS;UNICODE;_UNICODE;WIN32;WIN64;WNT;QT_NO_DEBUG;QT_OPENGL_LIB;QT_WIDGETS_LIB;QT_GUI_LIB;QT_CORE_LIB;NDEBUG</Define>
-    </QtMoc>
   </ItemGroup>
   <ItemGroup>
     <QtUic Include="ObjectWidget.ui" />
@@ -438,6 +340,24 @@
     <Image Include="Resources\viewLeft.png" />
     <Image Include="Resources\viewRight.png" />
     <Image Include="Resources\viewTop.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <QtMoc Include="Src\CodeEditor.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <QtMoc Include="Src\Highlighter.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Src\MaterialLibrary.h" />
+    <ClInclude Include="Src\PrimitiveLibrary.h" />
+    <ClInclude Include="Src\procedures.h" />
+    <QtMoc Include="Src\ToolsConfiguration.h" />
+    <QtMoc Include="Src\PropertyWidget.h" />
+    <QtMoc Include="Src\PHELM.h" />
+    <QtMoc Include="Src\OCCWindow.h" />
+    <QtMoc Include="Src\OCCOpenGL.h" />
+    <QtMoc Include="Src\OCCDomainLang.h" />
+    <QtMoc Include="Src\ObjectWidget.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">

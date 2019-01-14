@@ -41,10 +41,6 @@
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
       <Extensions>cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
-    <Filter Include="Source Files">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
-    </Filter>
     <Filter Include="Sketcher">
       <UniqueIdentifier>{a6967a76-783a-4797-bd34-a70165a9849a}</UniqueIdentifier>
     </Filter>
@@ -53,6 +49,10 @@
     </Filter>
     <Filter Include="Splitter">
       <UniqueIdentifier>{649d8225-88d8-4f7f-94d1-326cc2d92cd3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Src">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -142,9 +142,6 @@
     </ClCompile>
     <ClCompile Include="Sketcher\Sketcher_SnapExisitingEdge.cpp">
       <Filter>Sketcher</Filter>
-    </ClCompile>
-    <ClCompile Include="ToolsConfiguration.cpp">
-      <Filter>Generated Files</Filter>
     </ClCompile>
     <ClCompile Include="Sketcher\Geom2d_Arc.cpp">
       <Filter>Sketcher</Filter>
@@ -260,68 +257,42 @@
     <ClCompile Include="Features\Matrix4D.cpp">
       <Filter>Features</Filter>
     </ClCompile>
-    <ClCompile Include="CodeEditor.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Highlighter.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ObjectWidget.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="OCCDomainLang.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="OCCOpenGL.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="OCCWindow.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="PHELM.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="PropertyWidget.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Splitter\GEOMAlgo_Splitter.cxx">
       <Filter>Splitter</Filter>
     </ClCompile>
     <ClCompile Include="Splitter\BOPTools.cxx">
       <Filter>Splitter</Filter>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <QtMoc Include="OCCWindow.h">
-      <Filter>Header Files</Filter>
-    </QtMoc>
-    <QtMoc Include="OCCOpenGL.h">
-      <Filter>Header Files</Filter>
-    </QtMoc>
-    <QtMoc Include="PHELM.h">
-      <Filter>Header Files</Filter>
-    </QtMoc>
-    <QtMoc Include="OCCDomainLang.h">
-      <Filter>Header Files</Filter>
-    </QtMoc>
-    <QtMoc Include="Highlighter.h">
-      <Filter>Header Files</Filter>
-    </QtMoc>
-    <QtMoc Include="CodeEditor.h">
-      <Filter>Header Files</Filter>
-    </QtMoc>
-    <QtMoc Include="PropertyWidget.h">
-      <Filter>Header Files</Filter>
-    </QtMoc>
-    <QtMoc Include="ObjectWidget.h">
-      <Filter>Header Files</Filter>
-    </QtMoc>
-    <QtMoc Include="ToolsConfiguration.h">
-      <Filter>Generated Files</Filter>
-    </QtMoc>
+    <ClCompile Include="Src\CodeEditor.cpp">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Highlighter.cpp">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Main.cpp">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\ObjectWidget.cpp">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\OCCDomainLang.cpp">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\OCCOpenGL.cpp">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\OCCWindow.cpp">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\PHELM.cpp">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\PropertyWidget.cpp">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\ToolsConfiguration.cpp">
+      <Filter>Src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="debug\moc_predefs.h.cbt">
@@ -397,9 +368,6 @@
     <None Include="Resources\loft.png">
       <Filter>Resource Files</Filter>
     </None>
-    <QtRcc Include="occqt.qrc">
-      <Filter>Resource Files</Filter>
-    </QtRcc>
     <None Include="Resources\revolve.png">
       <Filter>Resource Files</Filter>
     </None>
@@ -409,134 +377,6 @@
     <None Include="Resources\torus.png">
       <Filter>Resource Files</Filter>
     </None>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="procedures.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="GEOMAlgo_Splitter.hxx">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="BOPTools.hxx">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MaterialLibrary.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="PrimitiveLibrary.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Vector3D.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="TopoShape.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="FileInfo.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="TimeInfo.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ComplexGeoData.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Exception.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="CrossSection.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Type.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Swap.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="BaseClass.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Tools.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Persistence.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Handle.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="FaceMaker.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="FaceMakerBullseye.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="FaceMakerCheese.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="modelRefine.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Property.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="PropertyContainer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="FeaturePartPolygon.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Matrix4D.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Tools2D.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Rotation.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Placement.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="FeaturePrimitive.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="FeatureBox.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="BoundBox.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="FeaturePartCut.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="PropertyStandard.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="PropertyTopoShape.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="FeaturePartBoolean.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="PropertyFeature.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="PropertyUnits.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="FeatureBezierCurve.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="FeatureDrill.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="FeaturePolycut.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="FeaturePolyline.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="Resources\cube_crop.png">
@@ -566,5 +406,50 @@
     <Image Include="Resources\viewTop.png">
       <Filter>Resource Files</Filter>
     </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <QtRcc Include="CarpentryCAD.qrc">
+      <Filter>Resource Files</Filter>
+    </QtRcc>
+  </ItemGroup>
+  <ItemGroup>
+    <QtMoc Include="Src\CodeEditor.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="Src\Highlighter.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="Src\ObjectWidget.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="Src\OCCDomainLang.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="Src\OCCOpenGL.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="Src\OCCWindow.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="Src\PHELM.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="Src\PropertyWidget.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="Src\ToolsConfiguration.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Src\MaterialLibrary.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Src\PrimitiveLibrary.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Src\procedures.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
