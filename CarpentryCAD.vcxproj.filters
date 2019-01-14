@@ -394,7 +394,7 @@
     </Image>
   </ItemGroup>
   <ItemGroup>
-    <QtRcc Include="CarpentryCAD.qrc">
+    <QtRcc Include="Gui\CarpentryCAD.qrc">
       <Filter>Resource Files</Filter>
     </QtRcc>
   </ItemGroup>
