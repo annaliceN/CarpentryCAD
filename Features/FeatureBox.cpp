@@ -36,7 +36,9 @@ short FeatureBox::mustExecute() const
 	if (Length.isTouched() ||
 		Height.isTouched() ||
 		Width.isTouched())
+	{
 		return 1;
+	}
 	return FeaturePrimitive::mustExecute();
 }
 

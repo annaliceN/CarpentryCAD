@@ -2,6 +2,7 @@
 =======================
 
 This is a CAD software that can help people customise or reconfigure their furnitures easily.
+Currently, I am using Visual Studio 2015 to develope this interesting software (Visual Studio is handful especially when you need to debug your program). Someday I will write a CMakeLists.txt to make the compilation easier for Linux systems.
 
 ## Dependency
 
@@ -9,10 +10,10 @@ This is a CAD software that can help people customise or reconfigure their furni
 
 [OpenCASCADE](https://www.opencascade.com/): An object-oriented C++ library for CAD/CAM/CAE, ver. 7.3.0
 
-Acknowledge:
+**ACKNOLWEDGEMENT:**
 During the development of this software, we use some codes from [FreeCAD](https://github.com/freeCAD/FreeCAD) and [OpenCASCADE Sketcher](http://www.laduga.com/software/occsketcher/index.html).
 
-WARNING: This repository is still under development, please use it with cautions. Any related feedback is welcome!
+**WARNING:** This repository is still under development, please use it with cautions. Any related feedback is welcome!
 
 ## TODO List
 
@@ -30,3 +31,8 @@ WARNING: This repository is still under development, please use it with cautions
 - [ ] Internal cuts, an initial point reference, automatically change it.
 - [x] Cut-through: For the polycut, priority.
 - [x] Cool for this tool: List a bunch of tools.
+
+### Jan. 15th
+
+- [ ] Functional variable and its property (FeatureExpression).
+- [ ] Refine HELM code generation.
